@@ -1,7 +1,6 @@
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
-
-#define TUGSCALE 1.3f;
+#include "cinder/Camera.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -15,6 +14,9 @@ private:
 	Vec2f centroid;
 	float tug[4];
 	float last;
+	CameraOrtho cam;
+	vector<Vec2f> enemies;
+	static const float TUGSC;
 	
 public:
 	void setup();
@@ -43,6 +45,11 @@ void tearApp::setup()
 		tug[i] = .0f;
 	
 	last = .0f;
+	
+	cam = CameraOrtho(0, getWindowWidth(), getWindowHeight(), 0, 0, 1000);
+	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
+	
+	setFrameRate(60.0f);
 }
 
 void tearApp::mouseDown( MouseEvent event )
@@ -52,21 +59,23 @@ void tearApp::mouseDown( MouseEvent event )
 void tearApp::keyDown( KeyEvent event )
 {
 	if( event.getChar() == 'q' ){
-		tug[0] += TUGSCALE;
+		tug[0] += TUGSC;
 	}
 	if( event.getChar() == 'p' ){
-		tug[1] += TUGSCALE;
+		tug[1] += TUGSC;
 	}
 	if( event.getChar() == 'm' ){
-		tug[2] += TUGSCALE;
+		tug[2] += TUGSC;
 	}
 	if( event.getChar() == 'c' ){
-		tug[3] += TUGSCALE;
+		tug[3] += TUGSC;
 	}
 }
 
 void tearApp::update()
 {
+	
+	
 	float now = getElapsedSeconds();
 	float dt = now - last;
 	last = now;
@@ -109,7 +118,7 @@ void tearApp::update()
 		
 		if(pt.distance(centroid) > 55.0f)
 		{
-			pt += (centroid - pt).normalized() * (1.3f / 3.0f) * sumdist/300.0f;
+			pt += (centroid - pt).normalized() * ( TUGSC / 2.0f ) * sumdist/300.0f;
 		}
 	}
 	
@@ -118,8 +127,26 @@ void tearApp::update()
 
 void tearApp::draw()
 {
-	// clear out the window with black
+	cam.lookAt(Vec3f(centroid.x - getWindowWidth()/2, centroid.y - getWindowHeight()/2, 10.0f), Vec3f(centroid.x - getWindowWidth()/2, centroid.y - getWindowHeight()/2, .0f));
+	gl::setMatrices(cam);
+	
 	gl::clear( Color( 0, 0, 0 ) ); 
+	
+	for(int i = 0; i < 100; i++)
+		for(int j = 0; j < 100; j++)
+		{
+			if(centroid.distance(Vec2f(i*100-5000, j*100-5000)) > getWindowWidth() * 2) continue;
+			
+			glPushMatrix();
+			gl::translate(Vec2f(i * 100 - 5000, j * 100 - 5000));
+			gl::color(Color(.3f, .3f, .3f));
+			gl::drawLine(Vec2f(-5.0f, -5.0f), Vec2f(5.0f, 5.0f));
+			gl::drawLine(Vec2f(5.0f, -5.0f), Vec2f(-5.0f, 5.0f));
+			glPopMatrix();
+		}
+	
+	// clear out the window with black
+	
 	gl::color(Color(1.0f, .0f, .0f));
 	gl::draw(blob);
 	
@@ -132,15 +159,26 @@ void tearApp::draw()
 		
 		gl::color(Color(1.0f, .0f, .0f));
 		gl::drawStrokedCircle(Vec2f(.0f, .0f), 5.0f, 32);
+		gl::drawVector(Vec3f(.0f, .0f, .0f), Vec3f(dirs[i].x, dirs[i].y, .0f) * 10);
+		
 		gl::color(Color(.7f, .7f, .0f));
 		gl::drawSolidCircle(Vec2f(.0f, .0f), 4.8f, 32);
 		
 		glPopMatrix();
 	}
 	
+	glPushMatrix();
+	
+	gl::translate(centroid);
+	
 	gl::color(Color(1.0f, .0f, .0f));
-	gl::drawSolidCircle(centroid, 5.0f, 32);
+	gl::drawSolidCircle(Vec2f(.0f, .0f), 5.0f, 32);
+	
+	glPopMatrix();
+	
+	
 }
 
+const float tearApp::TUGSC = 1.8f;
 
 CINDER_APP_BASIC( tearApp, RendererGl )
