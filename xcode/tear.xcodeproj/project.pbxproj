@@ -18,6 +18,8 @@
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
 		53E3CDFC0E86099300238D2B /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53E3CDFB0E86099300238D2B /* Carbon.framework */; };
+		6638B95B126E330300C1080A /* wiicpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6638B959126E330300C1080A /* wiicpp.cpp */; };
+		6638B962126E35C900C1080A /* WiiMgr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6638B961126E35C900C1080A /* WiiMgr.cpp */; };
 		6697A7D1126BCDC00091953B /* EnemyGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6697A7D0126BCDC00091953B /* EnemyGenerator.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
@@ -39,6 +41,11 @@
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
 		5323E6B50EAFCA7E003A9687 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
 		53E3CDFB0E86099300238D2B /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		6638B8CF126E27FB00C1080A /* GameState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameState.h; sourceTree = "<group>"; };
+		6638B959126E330300C1080A /* wiicpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = wiicpp.cpp; sourceTree = "<group>"; };
+		6638B95A126E330300C1080A /* wiicpp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wiicpp.h; sourceTree = "<group>"; };
+		6638B960126E35C900C1080A /* WiiMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WiiMgr.h; sourceTree = "<group>"; };
+		6638B961126E35C900C1080A /* WiiMgr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WiiMgr.cpp; sourceTree = "<group>"; };
 		6697A7CF126BCDC00091953B /* EnemyGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EnemyGenerator.h; sourceTree = "<group>"; };
 		6697A7D0126BCDC00091953B /* EnemyGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EnemyGenerator.cpp; sourceTree = "<group>"; };
 		6697A7E6126BFC670091953B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
@@ -70,10 +77,13 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				6638B961126E35C900C1080A /* WiiMgr.cpp */,
+				6638B959126E330300C1080A /* wiicpp.cpp */,
 				00BAE6590E7ED9C10018A608 /* tearApp.cpp */,
 				6697A7CF126BCDC00091953B /* EnemyGenerator.h */,
 				6697A7D0126BCDC00091953B /* EnemyGenerator.cpp */,
 				6697A7E6126BFC670091953B /* util.h */,
+				6638B8CF126E27FB00C1080A /* GameState.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -128,6 +138,8 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				6638B95A126E330300C1080A /* wiicpp.h */,
+				6638B960126E35C900C1080A /* WiiMgr.h */,
 				32CA4F630368D1EE00C91783 /* tear_Prefix.pch */,
 			);
 			name = Headers;
@@ -207,6 +219,8 @@
 			files = (
 				00BAE65A0E7ED9C10018A608 /* tearApp.cpp in Sources */,
 				6697A7D1126BCDC00091953B /* EnemyGenerator.cpp in Sources */,
+				6638B95B126E330300C1080A /* wiicpp.cpp in Sources */,
+				6638B962126E35C900C1080A /* WiiMgr.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,6 +1,7 @@
 #include "cinder/app/AppBasic.h"
 #include "cinder/gl/gl.h"
 #include "cinder/Camera.h"
+#include "EnemyGenerator.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -9,16 +10,20 @@ using namespace std;
 class tearApp : public AppBasic {
 	
 private:
-	PolyLine<Vec2f> blob;
+	PolyLine<Vec2f> *blob;
 	vector<Vec2f> dirs;
-	Vec2f centroid;
+	Vec2f *centroid;
 	float tug[4];
 	float last;
 	CameraOrtho cam;
 	vector<Vec2f> enemies;
 	static const float TUGSC;
+	EnemyGenerator* egen;
 	
 public:
+	
+	GameState* gs;
+	
 	void setup();
 	void mouseDown( MouseEvent event );	
 	void keyDown( KeyEvent event );
@@ -28,12 +33,12 @@ public:
 
 void tearApp::setup()
 {
-	blob = PolyLine<Vec2f>();
-	blob.setClosed(true);
-	blob.push_back(Vec2f(20.0f, 50.0f));
-	blob.push_back(Vec2f(40.0f, 50.0f));
-	blob.push_back(Vec2f(40.0f, 100.0f));
-	blob.push_back(Vec2f(20.0f, 100.0f));
+	blob = new PolyLine<Vec2f>();
+	blob->setClosed(true);
+	blob->push_back(Vec2f(20.0f, 50.0f));
+	blob->push_back(Vec2f(40.0f, 50.0f));
+	blob->push_back(Vec2f(40.0f, 100.0f));
+	blob->push_back(Vec2f(20.0f, 100.0f));
 	
 	dirs = vector<Vec2f>();
 	dirs.push_back(Vec2f(-1.0f, -1.0f));
@@ -50,6 +55,15 @@ void tearApp::setup()
 	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
 	
 	setFrameRate(60.0f);
+	
+	gs = new GameState();
+	
+	centroid = new Vec2f(.0f, .0f);
+	
+	gs->blob = blob;
+	gs->centroid = centroid;
+	
+	egen = new EnemyGenerator(gs, 1.0f, 18.0f);
 }
 
 void tearApp::mouseDown( MouseEvent event )
@@ -83,51 +97,53 @@ void tearApp::update()
 	for(int i = 0; i < 4; i++)
 	{
 		if(tug[i] > .0f) tug[i] *= .93f;
-		blob.getPoints()[i] += dirs[i] * tug[i];
+		blob->getPoints()[i] += dirs[i] * tug[i];
 		
 		for(int j = 0; j < 4; j++)
 		{
 			if(j == i) continue;
-			blob.getPoints()[i] += dirs[j] * tug[j] * 0.3f;
+			blob->getPoints()[i] += dirs[j] * tug[j] * 0.3f;
 			
 		}
 		
 		
 	}
 	
-	centroid = Vec2f(.0f, .0f);
+	centroid->x = .0f;
+	centroid->y = .0f;
 	
 	for(int i = 0; i < 4; i++)
 	{
-		centroid += blob.getPoints()[i];
+		*centroid += blob->getPoints()[i];
 	}
 	
-	centroid /= 4.0f;
+	*centroid /= 4.0f;
 	
 	float sumdist = .0f;
 	
 	for(int i = 0; i < 4; i++)
 	{
-		sumdist += blob.getPoints()[i].distance(centroid);
+		sumdist += blob->getPoints()[i].distance(*centroid);
 	}
 	
 	for(int i = 0; i < 4; i++)
 	{
-		Vec2f& pt = blob.getPoints()[i];
+		Vec2f& pt = blob->getPoints()[i];
 		
 		
-		if(pt.distance(centroid) > 55.0f)
+		if(pt.distance(*centroid) > 55.0f)
 		{
-			pt += (centroid - pt).normalized() * ( TUGSC / 2.0f ) * sumdist/300.0f;
+			pt += (*centroid - pt).normalized() * ( TUGSC / 2.0f ) * sumdist/300.0f;
 		}
 	}
 	
+	egen->update(dt);
 	
 }
 
 void tearApp::draw()
 {
-	cam.lookAt(Vec3f(centroid.x - getWindowWidth()/2, centroid.y - getWindowHeight()/2, 10.0f), Vec3f(centroid.x - getWindowWidth()/2, centroid.y - getWindowHeight()/2, .0f));
+	cam.lookAt(Vec3f(centroid->x - getWindowWidth()/2, centroid->y - getWindowHeight()/2, 10.0f), Vec3f(centroid->x - getWindowWidth()/2, centroid->y - getWindowHeight()/2, .0f));
 	gl::setMatrices(cam);
 	
 	gl::clear( Color( 0, 0, 0 ) ); 
@@ -135,7 +151,7 @@ void tearApp::draw()
 	for(int i = 0; i < 100; i++)
 		for(int j = 0; j < 100; j++)
 		{
-			if(centroid.distance(Vec2f(i*100-5000, j*100-5000)) > getWindowWidth() * 2) continue;
+			if(centroid->distance(Vec2f(i*100-5000, j*100-5000)) > getWindowWidth() * 2) continue;
 			
 			glPushMatrix();
 			gl::translate(Vec2f(i * 100 - 5000, j * 100 - 5000));
@@ -148,11 +164,11 @@ void tearApp::draw()
 	// clear out the window with black
 	
 	gl::color(Color(1.0f, .0f, .0f));
-	gl::draw(blob);
+	gl::draw(*blob);
 	
 	for(int i = 0; i < 4; i++)
 	{
-		Vec2f& pt = blob.getPoints()[i];
+		Vec2f& pt = blob->getPoints()[i];
 		glPushMatrix();
 		
 		gl::translate(pt);
@@ -169,12 +185,14 @@ void tearApp::draw()
 	
 	glPushMatrix();
 	
-	gl::translate(centroid);
+	gl::translate(*centroid);
 	
 	gl::color(Color(1.0f, .0f, .0f));
 	gl::drawSolidCircle(Vec2f(.0f, .0f), 5.0f, 32);
 	
 	glPopMatrix();
+	
+	egen->draw();
 	
 	
 }
