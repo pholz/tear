@@ -2,6 +2,7 @@
 #include "cinder/gl/gl.h"
 #include "cinder/Camera.h"
 #include "EnemyGenerator.h"
+#include "WiiMgr.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -19,17 +20,24 @@ private:
 	vector<Vec2f> enemies;
 	static const float TUGSC;
 	EnemyGenerator* egen;
+	WiiMgr* wiim;
 	
 public:
 	
 	GameState* gs;
 	
+	void prepareSettings(Settings* settings);
 	void setup();
 	void mouseDown( MouseEvent event );	
 	void keyDown( KeyEvent event );
 	void update();
 	void draw();
 };
+
+void tearApp::prepareSettings(Settings* settings)
+{
+	wiim = new WiiMgr();
+}
 
 void tearApp::setup()
 {
@@ -64,6 +72,8 @@ void tearApp::setup()
 	gs->centroid = centroid;
 	
 	egen = new EnemyGenerator(gs, 1.0f, 18.0f);
+	
+	
 }
 
 void tearApp::mouseDown( MouseEvent event )
@@ -138,6 +148,8 @@ void tearApp::update()
 	}
 	
 	egen->update(dt);
+	
+	wiim->update(dt);
 	
 }
 
