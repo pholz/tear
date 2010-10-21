@@ -5,6 +5,9 @@
 #include "EnemyGenerator.h"
 #include "WiiMgr.h"
 #include "cinder/Thread.h"
+#include "cinder/gl/Texture.h"
+#include "cinder/Text.h"
+#include <sstream>
 
 using namespace ci;
 using namespace ci::app;
@@ -26,10 +29,16 @@ private:
 	static const float TUGSC;
 	EnemyGenerator* egen;
 	WiiMgr* wiim;
+	bool debug;
+	boost::shared_ptr<vector<Enemy> > colliding;
+	float score;
+	Font helv;
 	
-	float wiitug[500];
-	bool tugged;
-	float tugctr;
+	gl::Texture scoreTexture;
+	
+	float wiitug[4][500];
+	bool tugged[4];
+	float tugctr[4];
 	
 public:
 	
@@ -42,7 +51,7 @@ public:
 	void update();
 	void draw();
 	void foo();
-	bool hasTugged();
+	bool hasTugged(int id);
 };
 
 void fooo()
@@ -58,6 +67,11 @@ void tearApp::prepareSettings(Settings* settings)
 
 void tearApp::setup()
 {
+	debug = false;
+	score = .0f;
+	
+	helv = Font("Helvetica", 24);
+	
 	blob = new PolyLine<Vec2f>();
 	blob->setClosed(true);
 	blob->push_back(Vec2f(20.0f, 50.0f));
@@ -71,14 +85,19 @@ void tearApp::setup()
 	dirs.push_back(Vec2f(1.0f, 1.0f));
 	dirs.push_back(Vec2f(-1.0f, 1.0f));
 	
-	tugged = false;
-	tugctr = .0f;
+	//colliding = NULL;
+	
 	
 	for(int i = 0; i < 4; i++)
+	{
 		tug[i] = .0f;
+		tugctr[i] = .0f;
+		tugged[i] = false;
+	}
 	
-	for(int i = 0; i < 500; i++)
-		wiitug[i] = .0f;
+	for(int j = 0; j < 4; j++)
+		for(int i = 0; i < 500; i++)
+			wiitug[j][i] = .0f;
 	
 	last = .0f;
 	
@@ -97,6 +116,12 @@ void tearApp::setup()
 	egen = new EnemyGenerator(gs, 1.0f, 18.0f);
 	
 	wiim->go();
+	
+	TextLayout simple;
+	simple.setFont( Font( "Helvetica", 24 ) );
+	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
+	simple.addLine( "score: 0" );
+	scoreTexture = gl::Texture( simple.render( true, false ) );
 }
 
 void tearApp::foo()
@@ -121,6 +146,9 @@ void tearApp::keyDown( KeyEvent event )
 	}
 	if( event.getChar() == 'c' ){
 		tug[3] += TUGSC;
+	}
+	if( event.getChar() == 'd' ){
+		debug = !debug;
 	}
 }
 
@@ -177,29 +205,50 @@ void tearApp::update()
 	
 	egen->update(dt);
 	
-	//wiim->update();
+	colliding = egen->collideWithBlob();
 	
-	for(int i = 0; i < 499; i++)
-	{
-		wiitug[i] = wiitug[i+1];
+	if(colliding){
+		vector<Enemy>::iterator it;
+		for(it = colliding->begin(); it < colliding->end(); it++)
+		{
+			if(it->type == GOOD) score += .001;
+			else				score -= .005;
+		}
 	}
 	
-	wiitug[499] = wiim->state_pitch;
 	
-	if(tugctr > .0f) tugctr -= dt;
-	if(tugctr < .0f) tugctr = .0f;
+	for(int j = 0; j < 4; j++)
+	{
+		for(int i = 0; i < 499; i++)
+		{
+			wiitug[j][i] = wiitug[j][i+1];
+		}
+		
+		
+		wiitug[j][499] = wiim->a_state_pitch[j];
+		
+		if(tugctr[j] > .0f) tugctr[j] -= dt;
+		if(tugctr[j] < .0f) tugctr[j] = .0f;
+		
+		tugged[j] = hasTugged(j);
+		if(tugged[j]) tug[j] += TUGSC * 3;
+	}
 	
-	tugged = hasTugged();
-	if(tugged) tug[2] += TUGSC;
-	
+	TextLayout simple;
+	simple.setFont( helv );
+	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
+	stringstream ss;
+	ss << "score: ";
+	ss << score;
+	simple.addLine( ss.str() );
+	scoreTexture = gl::Texture( simple.render( true, false ) );
 }
 
-bool tearApp::hasTugged()
+bool tearApp::hasTugged(int id)
 {
 	float max1 = .0f, min = .0f, max2 = .0f;
 	int mindex = 0;
 	
-	bool spikefound = false;
 	/*
 	for(int i = 498; i >= 430; i--)
 	{
@@ -226,7 +275,7 @@ bool tearApp::hasTugged()
 	
 	for(int i = 450; i < 500; i++)
 	{
-		min = math<float>::min(min, wiitug[i]);
+		min = math<float>::min(min, wiitug[id][i]);
 		mindex = i;
 	}
 		
@@ -235,17 +284,17 @@ bool tearApp::hasTugged()
 	{
 		for(int i = mindex; i < math<int>::min(mindex+30,500); i++)
 		{
-			max1 = math<float>::max(max1, wiitug[i]);
+			max1 = math<float>::max(max1, wiitug[id][i]);
 		}
 		
 		for(int i = mindex; i > math<int>::max(mindex-30,450); i--)
 		{
-			max2 = math<float>::max(max1, wiitug[i]);
+			max2 = math<float>::max(max1, wiitug[id][i]);
 		}
 		
-		if(tugctr == .0f && max1 > .0f && max2 > .0f && math<float>::abs(max1-max2) < 20.0f)
+		if(tugctr[id] == .0f && max1 > .0f && max2 > .0f && math<float>::abs(max1-max2) < 20.0f)
 		{
-			tugctr = 1.0f;
+			tugctr[id] = 1.0f;
 			return true;
 			
 		}
@@ -257,6 +306,8 @@ bool tearApp::hasTugged()
 
 void tearApp::draw()
 {
+	gl::enableAlphaBlending( false );
+	
 	cam.lookAt(Vec3f(centroid->x - getWindowWidth()/2, centroid->y - getWindowHeight()/2, 10.0f), Vec3f(centroid->x - getWindowWidth()/2, centroid->y - getWindowHeight()/2, .0f));
 	gl::setMatrices(cam);
 	
@@ -308,19 +359,38 @@ void tearApp::draw()
 	
 	egen->draw();
 	
-	glPushMatrix();
-	gl::translate(Vec2f(cam.getEyePoint().x, cam.getEyePoint().y+getWindowHeight()/2));
-	gl::color(Color(.0f, 1.0f, .0f));
-	glBegin(GL_LINE_STRIP);
-	for(int i = 0; i < 500; i++)
-		glVertex2f(i, -wiitug[i]*2);
-	glEnd();
-	glPopMatrix();
+	if(colliding){
+		vector<Enemy>::iterator it;
+		for(it = colliding->begin(); it < colliding->end(); it++)
+		{
+			glPushMatrix();
+			
+			gl::translate(it->pos);
+			gl::color(Color(1.0f, 1.0f, 1.0f));
+			gl::drawStrokedCircle(Vec2f(.0f, .0f), 15.0f, 32);
+			
+			glPopMatrix();
+		}
+	}
 	
-//	if(tugged)
-//	{
-//		gl::drawSolidCircle(Vec2f(.0f, .0f), 30.0f, 32);
-//	}
+	if(debug)
+	{
+		for(int k = 0; k < 4; k++)
+		{
+			glPushMatrix();
+			gl::translate(Vec2f(cam.getEyePoint().x, cam.getEyePoint().y+150+k*150));
+			gl::color(Color(.0f, 1.0f/(float(k)+1), .21f * (float(k)+1)));
+			glBegin(GL_LINE_STRIP);
+			for(int i = 0; i < 500; i++)
+				glVertex2f(i, -wiitug[k][i]);
+			glEnd();
+			glPopMatrix();
+			
+		}
+	}
+	
+	glColor3f( 1.0f, 1.0f, 1.0f );
+	gl::draw( scoreTexture, Vec2f( cam.getEyePoint().x + 10, cam.getEyePoint().y + getWindowHeight() - scoreTexture.getHeight() - 5 ) );
 	
 	
 }
