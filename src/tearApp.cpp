@@ -3,10 +3,15 @@
 #include "cinder/Camera.h"
 #include "EnemyGenerator.h"
 #include "WiiMgr.h"
+#include "cinder/Thread.h"
 
 using namespace ci;
 using namespace ci::app;
 using namespace std;
+
+
+
+
 
 class tearApp : public AppBasic {
 	
@@ -17,7 +22,6 @@ private:
 	float tug[4];
 	float last;
 	CameraOrtho cam;
-	vector<Vec2f> enemies;
 	static const float TUGSC;
 	EnemyGenerator* egen;
 	WiiMgr* wiim;
@@ -32,7 +36,13 @@ public:
 	void keyDown( KeyEvent event );
 	void update();
 	void draw();
+	void foo();
 };
+
+void fooo()
+{
+	printf("FOOFOO");
+}
 
 void tearApp::prepareSettings(Settings* settings)
 {
@@ -73,7 +83,12 @@ void tearApp::setup()
 	
 	egen = new EnemyGenerator(gs, 1.0f, 18.0f);
 	
-	
+	wiim->go();
+}
+
+void tearApp::foo()
+{
+	printf("foo");
 }
 
 void tearApp::mouseDown( MouseEvent event )
@@ -149,7 +164,7 @@ void tearApp::update()
 	
 	egen->update(dt);
 	
-	wiim->update(dt);
+	//wiim->update();
 	
 }
 
