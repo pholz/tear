@@ -11,6 +11,7 @@
 #include "cinder/gl/gl.h"
 
 #include "util.h"
+#define VEL 1.0f
 
 EnemyGenerator::EnemyGenerator(GameState* _gs, float _iv, float _lt)
 {
@@ -74,14 +75,18 @@ Enemy::Enemy(GameState* _gs, float lt, Rand* rand)
 	lifetime = lt;
 	expired = .0f;
 	gs = _gs;
-	type = rand->nextInt(0,6) == 1 ? GOOD : BAD;
+	int ty = rand->nextInt(0,10);
+	
+	if(ty < 6) type = BAD;
+	else if(ty < 8) type = UGLY;
+	else type = GOOD;
 	
 	
 	do{
 		pos = Vec2f(rand->nextFloat(gs->centroid->x-500, gs->centroid->x+500), rand->nextFloat(gs->centroid->y-500, gs->centroid->y+500));
 	}while( insidePolygon(pos, *(gs->blob)) );
 	
-	vel = Vec2f(rand->nextFloat(-.4f, .4f), rand->nextFloat(-.4f, .4f));
+	vel = Vec2f(rand->nextFloat(-VEL, VEL), rand->nextFloat(-VEL, VEL));
 	
 }
 
@@ -98,8 +103,10 @@ void Enemy::draw()
 	gl::translate(pos);
 	if(type == GOOD)
 		gl::color(Color(.7f, .9f, 1.0f));
-	else
+	else if(type == BAD)
 		gl::color(Color(1.0f, .1f, 1.0f));
+	else
+		gl::color(Color(1.0f, 1.0f, .1f));
 	gl::drawSolidCircle(Vec2f(.0f, .0f), 10.0f, 32);
 	
 	glPopMatrix();

@@ -16,7 +16,8 @@ using namespace std;
 
 enum enemy_type {
 	GOOD,
-	BAD
+	BAD,
+	UGLY
 };
 
 class Enemy {

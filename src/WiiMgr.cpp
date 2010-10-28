@@ -20,7 +20,7 @@ WiiMgr::WiiMgr()
 	cout << "Searching for wiimotes->.. Turn them on!" << endl;
 	
     //Find the wiimote
-    numFound = wii.Find(5);
+    numFound = wii.Find(1);
 	
     // Search for up to five seconds;
 	

@@ -31,8 +31,12 @@ private:
 	WiiMgr* wiim;
 	bool debug;
 	boost::shared_ptr<vector<Enemy> > colliding;
-	float score;
+	
+	float score, life;
+	float iscore[4];
+	
 	Font helv;
+	
 	
 	gl::Texture scoreTexture;
 	
@@ -69,6 +73,7 @@ void tearApp::setup()
 {
 	debug = false;
 	score = .0f;
+	life = 100.0f;
 	
 	helv = Font("Helvetica", 24);
 	
@@ -160,6 +165,8 @@ void tearApp::update()
 	float dt = now - last;
 	last = now;
 	
+	life -= dt;
+	
 	// move corners according to tug (indirectly and directly)
 	for(int i = 0; i < 4; i++)
 	{
@@ -217,8 +224,15 @@ void tearApp::update()
 		vector<Enemy>::iterator it;
 		for(it = colliding->begin(); it < colliding->end(); it++)
 		{
-			if(it->type == GOOD) score += .001;
-			else				score -= .005;
+			if(it->type == GOOD) 
+			{
+				score += .001;
+				life += 3 * dt;
+			}
+			else {
+				score -= .005;
+				life -= dt;
+			}		
 		}
 	}
 	
@@ -248,7 +262,9 @@ void tearApp::update()
 	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
 	stringstream ss;
 	ss << "score: ";
-	ss << score;
+	ss << ((int) score);
+	ss << " -- life: ";
+	ss << ((int) life);
 	simple.addLine( ss.str() );
 	scoreTexture = gl::Texture( simple.render( true, false ) );
 }
@@ -392,6 +408,6 @@ void tearApp::draw()
 	
 }
 
-const float tearApp::TUGSC = 1.8f;
+const float tearApp::TUGSC = 2.8f;
 
 CINDER_APP_BASIC( tearApp, RendererGl )
