@@ -60,36 +60,36 @@
 		6638B960126E35C900C1080A /* WiiMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WiiMgr.h; path = ../include/WiiMgr.h; sourceTree = "<group>"; };
 		6638B961126E35C900C1080A /* WiiMgr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WiiMgr.cpp; path = ../src/WiiMgr.cpp; sourceTree = "<group>"; };
 		6638B974126E3B4200C1080A /* balanceboard.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = balanceboard.c; path = ../src/balanceboard.c; sourceTree = "<group>"; };
-		6638B975126E3B4200C1080A /* balanceboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = balanceboard.h; sourceTree = "<group>"; };
+		6638B975126E3B4200C1080A /* balanceboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = balanceboard.h; path = ../include/balanceboard.h; sourceTree = "<group>"; };
 		6638B976126E3B4200C1080A /* classic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = classic.c; path = ../src/classic.c; sourceTree = "<group>"; };
-		6638B977126E3B4200C1080A /* classic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = classic.h; sourceTree = "<group>"; };
-		6638B978126E3B4200C1080A /* definitions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = definitions.h; sourceTree = "<group>"; };
+		6638B977126E3B4200C1080A /* classic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = classic.h; path = ../include/classic.h; sourceTree = "<group>"; };
+		6638B978126E3B4200C1080A /* definitions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = definitions.h; path = ../include/definitions.h; sourceTree = "<group>"; };
 		6638B979126E3B4200C1080A /* dynamics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dynamics.c; path = ../src/dynamics.c; sourceTree = "<group>"; };
-		6638B97A126E3B4200C1080A /* dynamics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dynamics.h; sourceTree = "<group>"; };
+		6638B97A126E3B4200C1080A /* dynamics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dynamics.h; path = ../include/dynamics.h; sourceTree = "<group>"; };
 		6638B97B126E3B4200C1080A /* events.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = events.c; path = ../src/events.c; sourceTree = "<group>"; };
-		6638B97C126E3B4200C1080A /* events.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = events.h; sourceTree = "<group>"; };
+		6638B97C126E3B4200C1080A /* events.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = events.h; path = ../include/events.h; sourceTree = "<group>"; };
 		6638B97D126E3B4200C1080A /* guitar_hero_3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = guitar_hero_3.c; path = ../src/guitar_hero_3.c; sourceTree = "<group>"; };
-		6638B97E126E3B4300C1080A /* guitar_hero_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = guitar_hero_3.h; sourceTree = "<group>"; };
-		6638B97F126E3B4300C1080A /* io_mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = io_mac.h; sourceTree = "<group>"; };
+		6638B97E126E3B4300C1080A /* guitar_hero_3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = guitar_hero_3.h; path = ../include/guitar_hero_3.h; sourceTree = "<group>"; };
+		6638B97F126E3B4300C1080A /* io_mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = io_mac.h; path = ../include/io_mac.h; sourceTree = "<group>"; };
 		6638B980126E3B4300C1080A /* io_mac.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = io_mac.m; path = ../src/io_mac.m; sourceTree = "<group>"; };
 		6638B981126E3B4300C1080A /* io_nix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = io_nix.c; path = ../src/io_nix.c; sourceTree = "<group>"; };
 		6638B982126E3B4300C1080A /* io.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = io.c; path = ../src/io.c; sourceTree = "<group>"; };
-		6638B983126E3B4300C1080A /* io.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = io.h; sourceTree = "<group>"; };
+		6638B983126E3B4300C1080A /* io.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = io.h; path = ../include/io.h; sourceTree = "<group>"; };
 		6638B984126E3B4300C1080A /* ir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ir.c; path = ../src/ir.c; sourceTree = "<group>"; };
-		6638B985126E3B4300C1080A /* ir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ir.h; sourceTree = "<group>"; };
+		6638B985126E3B4300C1080A /* ir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir.h; path = ../include/ir.h; sourceTree = "<group>"; };
 		6638B986126E3B4300C1080A /* motionplus.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = motionplus.c; path = ../src/motionplus.c; sourceTree = "<group>"; };
-		6638B987126E3B4300C1080A /* motionplus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = motionplus.h; sourceTree = "<group>"; };
+		6638B987126E3B4300C1080A /* motionplus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = motionplus.h; path = ../include/motionplus.h; sourceTree = "<group>"; };
 		6638B988126E3B4300C1080A /* nunchuk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = nunchuk.c; path = ../src/nunchuk.c; sourceTree = "<group>"; };
-		6638B989126E3B4300C1080A /* nunchuk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = nunchuk.h; sourceTree = "<group>"; };
+		6638B989126E3B4300C1080A /* nunchuk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nunchuk.h; path = ../include/nunchuk.h; sourceTree = "<group>"; };
 		6638B98A126E3B4300C1080A /* speaker.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = speaker.c; path = ../src/speaker.c; sourceTree = "<group>"; };
-		6638B98B126E3B4300C1080A /* speaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = speaker.h; sourceTree = "<group>"; };
-		6638B98C126E3B4300C1080A /* wiic_doc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wiic_doc.h; sourceTree = "<group>"; };
-		6638B98D126E3B4300C1080A /* wiic_functions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wiic_functions.h; sourceTree = "<group>"; };
-		6638B98E126E3B4300C1080A /* wiic_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wiic_internal.h; sourceTree = "<group>"; };
-		6638B98F126E3B4300C1080A /* wiic_macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wiic_macros.h; sourceTree = "<group>"; };
-		6638B990126E3B4300C1080A /* wiic_structs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wiic_structs.h; sourceTree = "<group>"; };
+		6638B98B126E3B4300C1080A /* speaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = speaker.h; path = ../include/speaker.h; sourceTree = "<group>"; };
+		6638B98C126E3B4300C1080A /* wiic_doc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wiic_doc.h; path = ../include/wiic_doc.h; sourceTree = "<group>"; };
+		6638B98D126E3B4300C1080A /* wiic_functions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wiic_functions.h; path = ../include/wiic_functions.h; sourceTree = "<group>"; };
+		6638B98E126E3B4300C1080A /* wiic_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wiic_internal.h; path = ../include/wiic_internal.h; sourceTree = "<group>"; };
+		6638B98F126E3B4300C1080A /* wiic_macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wiic_macros.h; path = ../include/wiic_macros.h; sourceTree = "<group>"; };
+		6638B990126E3B4300C1080A /* wiic_structs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wiic_structs.h; path = ../include/wiic_structs.h; sourceTree = "<group>"; };
 		6638B991126E3B4300C1080A /* wiic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = wiic.c; path = ../src/wiic.c; sourceTree = "<group>"; };
-		6638B992126E3B4300C1080A /* wiic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wiic.h; sourceTree = "<group>"; };
+		6638B992126E3B4300C1080A /* wiic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wiic.h; path = ../include/wiic.h; sourceTree = "<group>"; };
 		6638BB01126E97DE00C1080A /* ts-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ts-Info.plist"; sourceTree = "<group>"; };
 		6697A7CF126BCDC00091953B /* EnemyGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnemyGenerator.h; path = ../include/EnemyGenerator.h; sourceTree = "<group>"; };
 		6697A7E6126BFC670091953B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../include/util.h; sourceTree = "<group>"; };
@@ -124,7 +124,7 @@
 			children = (
 				66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */,
 				6638B961126E35C900C1080A /* WiiMgr.cpp */,
-				6638B959126E330300C1080A /* wiicpp.cpp */,
+				66A6489D1270C65800A9FA34 /* wiic */,
 				00BAE6590E7ED9C10018A608 /* tearApp.cpp */,
 			);
 			name = Source;
@@ -183,10 +183,8 @@
 			isa = PBXGroup;
 			children = (
 				6697A7CF126BCDC00091953B /* EnemyGenerator.h */,
-				6697A7E6126BFC670091953B /* util.h */,
+				66A6489C1270C65100A9FA34 /* wiic */,
 				6638B8CF126E27FB00C1080A /* GameState.h */,
-				6638B95A126E330300C1080A /* wiicpp.h */,
-				6638B960126E35C900C1080A /* WiiMgr.h */,
 				32CA4F630368D1EE00C91783 /* tear_Prefix.pch */,
 			);
 			name = Headers;
@@ -214,17 +212,17 @@
 			isa = PBXGroup;
 			children = (
 				6638B974126E3B4200C1080A /* balanceboard.c */,
-				6638B975126E3B4200C1080A /* balanceboard.h */,
 				6638B976126E3B4200C1080A /* classic.c */,
+				6638B979126E3B4200C1080A /* dynamics.c */,
+				6638B97B126E3B4200C1080A /* events.c */,
+				6638B97D126E3B4200C1080A /* guitar_hero_3.c */,
+				6638B97F126E3B4300C1080A /* io_mac.h */,
+				6638B975126E3B4200C1080A /* balanceboard.h */,
 				6638B977126E3B4200C1080A /* classic.h */,
 				6638B978126E3B4200C1080A /* definitions.h */,
-				6638B979126E3B4200C1080A /* dynamics.c */,
 				6638B97A126E3B4200C1080A /* dynamics.h */,
-				6638B97B126E3B4200C1080A /* events.c */,
 				6638B97C126E3B4200C1080A /* events.h */,
-				6638B97D126E3B4200C1080A /* guitar_hero_3.c */,
 				6638B97E126E3B4300C1080A /* guitar_hero_3.h */,
-				6638B97F126E3B4300C1080A /* io_mac.h */,
 				6638B980126E3B4300C1080A /* io_mac.m */,
 				6638B981126E3B4300C1080A /* io_nix.c */,
 				6638B982126E3B4300C1080A /* io.c */,
@@ -244,6 +242,24 @@
 				6638B990126E3B4300C1080A /* wiic_structs.h */,
 				6638B991126E3B4300C1080A /* wiic.c */,
 				6638B992126E3B4300C1080A /* wiic.h */,
+			);
+			name = wiic;
+			sourceTree = "<group>";
+		};
+		66A6489C1270C65100A9FA34 /* wiic */ = {
+			isa = PBXGroup;
+			children = (
+				6697A7E6126BFC670091953B /* util.h */,
+				6638B95A126E330300C1080A /* wiicpp.h */,
+				6638B960126E35C900C1080A /* WiiMgr.h */,
+			);
+			name = wiic;
+			sourceTree = "<group>";
+		};
+		66A6489D1270C65800A9FA34 /* wiic */ = {
+			isa = PBXGroup;
+			children = (
+				6638B959126E330300C1080A /* wiicpp.cpp */,
 			);
 			name = wiic;
 			sourceTree = "<group>";
