@@ -30,7 +30,8 @@ private:
 	EnemyGenerator* egen;
 	WiiMgr* wiim;
 	bool debug;
-	boost::shared_ptr<vector<Enemy> > colliding;
+	boost::shared_ptr<vector<Enemy*> > colliding;
+	boost::shared_ptr<vector<cornerCollision> > collidingCorners;
 	
 	float score, life;
 	float iscore[4];
@@ -98,6 +99,7 @@ void tearApp::setup()
 		tug[i] = .0f;
 		tugctr[i] = .0f;
 		tugged[i] = false;
+		iscore[i] = .0f;
 	}
 	
 	for(int j = 0; j < 4; j++)
@@ -220,22 +222,33 @@ void tearApp::update()
 	// collision detection and reaction between enemies and blob
 	colliding = egen->collideWithBlob();
 	
-	if(colliding){
-		vector<Enemy>::iterator it;
+	if(colliding)
+	{
+		vector<Enemy*>::iterator it;
 		for(it = colliding->begin(); it < colliding->end(); it++)
 		{
-			if(it->type == GOOD) 
+			if((*it)->type == GOOD) 
 			{
 				score += .001;
 				life += 3 * dt;
 			}
-			else {
-				score -= .005;
+			else if((*it)->type == BAD) 
+			{
+				score = math<float>::max(score - .005, .0f);
 				life -= dt;
-			}		
+			}
 		}
 	}
 	
+	collidingCorners = egen->collideWithCorners();
+	if(collidingCorners)
+	{
+		vector<cornerCollision>::iterator it;
+		for(it = collidingCorners->begin(); it < collidingCorners->end(); it++)
+		{
+			iscore[it->corner] = math<float>::min(iscore[it->corner] + dt * 4.0f, 100.0f);
+		}
+	}
 	
 	// advance "history" of tugs per wiimote
 	for(int j = 0; j < 4; j++)
@@ -266,7 +279,7 @@ void tearApp::update()
 	ss << " -- life: ";
 	ss << ((int) life);
 	simple.addLine( ss.str() );
-	scoreTexture = gl::Texture( simple.render( true, false ) );
+	scoreTexture = gl::Texture( simple.render( false, false ) );
 }
 
 bool tearApp::hasTugged(int id)
@@ -338,6 +351,23 @@ void tearApp::draw()
 	gl::color(Color(1.0f, .0f, .0f));
 	gl::draw(*blob);
 	
+	gl::color(ColorA(1.0f - life/100.0f, life/100.0f, .0f, .5f));
+	
+	glBegin(GL_TRIANGLE_FAN);
+	
+	gl::vertex(*centroid);
+	
+	for(int i = 0; i < 4; i++)
+	{
+		Vec2f& pt = blob->getPoints()[i];
+		
+		gl::vertex(pt);
+	}
+	
+	gl::vertex(blob->getPoints()[0]);
+			   
+	glEnd();
+	
 	// draw corners
 	for(int i = 0; i < 4; i++)
 	{
@@ -352,6 +382,22 @@ void tearApp::draw()
 		
 		gl::color(Color(.7f, .7f, .0f));
 		gl::drawSolidCircle(Vec2f(.0f, .0f), 4.8f, 32);
+		
+		
+		
+		gl::color(ColorA(.7f, .7f, .0f, 1.0f));
+		float step = 2 * M_PI / 10.0f;
+		float maxscore = 100.0f;
+		for(float rad = .0f; rad < 2*M_PI*iscore[i]/maxscore; rad += step)
+		{
+			glPushMatrix();
+			gl::translate(Vec2f(math<float>::cos(rad) * 20.0f, -math<float>::sin(rad) * 20.0f));
+			gl::drawSolidCircle(Vec2f(.0f, .0f), 3.0f, 16);
+			glPopMatrix();
+		}
+		
+		
+		
 		
 		glPopMatrix();
 	}
@@ -371,14 +417,31 @@ void tearApp::draw()
 	
 	// draw collision indicators
 	if(colliding){
-		vector<Enemy>::iterator it;
+		vector<Enemy*>::iterator it;
 		for(it = colliding->begin(); it < colliding->end(); it++)
 		{
 			glPushMatrix();
 			
-			gl::translate(it->pos);
+			gl::translate((*it)->pos);
 			gl::color(Color(1.0f, 1.0f, 1.0f));
 			gl::drawStrokedCircle(Vec2f(.0f, .0f), 15.0f, 32);
+			
+			glPopMatrix();
+		}
+	}
+	
+	if(collidingCorners)
+	{
+		vector<cornerCollision>::iterator it;
+		for(it = collidingCorners->begin(); it < collidingCorners->end(); it++)
+		{
+			glPushMatrix();
+			
+			Vec2f& pt = blob->getPoints()[it->corner];
+			
+			gl::translate(pt);
+			gl::color(Color(1.0f, 1.0f, 1.0f));
+			gl::drawStrokedCircle(Vec2f(.0f, .0f), 25.0f, 32);
 			
 			glPopMatrix();
 		}

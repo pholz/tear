@@ -13,12 +13,15 @@
 
 using namespace ci;
 using namespace std;
+//using namespace boost;
 
 enum enemy_type {
 	GOOD,
 	BAD,
 	UGLY
 };
+
+
 
 class Enemy {
 private:
@@ -35,9 +38,16 @@ public:
 	void draw();
 };
 
+typedef struct 
+{
+	int corner;
+	Enemy* enemy;
+} cornerCollision;
+
 class EnemyGenerator {
 private:
-	vector<Enemy> enemies;
+	vector<Enemy*> enemies;
+	vector<Enemy*> uglies;
 	GameState* gs;
 	float interval, lifetime;
 	float last, acc, total;
@@ -47,7 +57,8 @@ public:
 	EnemyGenerator(GameState* gs, float interval, float lifetime);
 //	~EnemyGenerator();
 	
-	boost::shared_ptr< vector<Enemy> > collideWithBlob();
+	boost::shared_ptr< vector<Enemy*> > collideWithBlob();
+	boost::shared_ptr< vector<cornerCollision> > collideWithCorners();
 	void update(float dt);
 	void draw();
 };

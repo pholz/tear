@@ -35,36 +35,64 @@ void EnemyGenerator::update(float dt)
 	if(acc >= interval)
 	{
 		acc = 0;
-		enemies.push_back(Enemy(gs, lifetime, rand));
+		Enemy *e = new Enemy(gs, lifetime, rand);
+		enemies.push_back(e);
+		
 	}
 	
-	vector<Enemy>::iterator it;
+	vector<Enemy*>::iterator it;
 	for(it = enemies.begin(); it < enemies.end(); it++)
 	{
-		it->update(dt);
-		if(it->expired > it->lifetime)
+		(*it)->update(dt);
+		if((*it)->expired > (*it)->lifetime)
 			enemies.erase(it);
 	}
 }
 
 void EnemyGenerator::draw()
 {
-	vector<Enemy>::iterator it;
+	vector<Enemy*>::iterator it;
 	for(it = enemies.begin(); it < enemies.end(); it++)
 	{
-		it->draw();
+		(*it)->draw();
 	}
 }
 
-boost::shared_ptr<vector<Enemy> > EnemyGenerator::collideWithBlob()
+boost::shared_ptr<vector<Enemy*> > EnemyGenerator::collideWithBlob()
 {
-	boost::shared_ptr< vector<Enemy> > coll (new vector<Enemy>());
+	boost::shared_ptr< vector<Enemy*> > coll (new vector<Enemy*>());
 	
-	vector<Enemy>::iterator it;
+	vector<Enemy*>::iterator it;
 	for(it = enemies.begin(); it < enemies.end(); it++)
 	{
-		if(insidePolygon(it->pos, *(gs->blob)))
+		if(insidePolygon((*it)->pos, *(gs->blob)))
 			coll->push_back(*it);
+	}
+	
+	return coll;
+}
+
+boost::shared_ptr< vector<cornerCollision> > EnemyGenerator::collideWithCorners()
+{
+	boost::shared_ptr< vector<cornerCollision> > coll (new vector<cornerCollision>());
+	
+	vector<Enemy*>::iterator it;
+	for(it = enemies.begin(); it < enemies.end(); it++)
+	{
+		if((*it)->type == UGLY)
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				Vec2f& pt = gs->blob->getPoints()[i];
+				if((*it)->pos.distance(pt) < 50.0f)
+				{
+					cornerCollision c;
+					c.enemy = (*it);
+					c.corner = i;
+					coll->push_back(c);
+				}
+			}
+		}
 	}
 	
 	return coll;
