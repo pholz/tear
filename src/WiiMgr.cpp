@@ -49,6 +49,8 @@ WiiMgr::WiiMgr()
 	
 	for(int i = 0; i < 4; i++)
 	{
+		a[i] = false;
+		b[i] = false;
 		a_state_roll[i] = .0f;
 		a_state_pitch[i] = .0f;
 	}
@@ -175,12 +177,14 @@ void WiiMgr::HandleEvent(CWiimote &wm)
     if(wm.Buttons.isPressed(CButtons::BUTTON_A))
     {
         printf("%s A pressed\n", prefixString);
-    }
+		a[wm.GetID()-1] = true;
+    } else a[wm.GetID()-1] = false;
 	
     if(wm.Buttons.isPressed(CButtons::BUTTON_B))
     {
         printf("%s B pressed\n", prefixString);
-    }
+		b[wm.GetID()-1] = true;
+    } else b[wm.GetID()-1] = false;
 	
     if(wm.Buttons.isPressed(CButtons::BUTTON_UP))
     {

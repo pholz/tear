@@ -22,8 +22,10 @@ class tearApp : public AppBasic {
 private:
 	PolyLine<Vec2f> *blob;
 	vector<Vec2f> dirs;
+	vector<Vec2f> origdirs;
 	Vec2f *centroid;
 	float tug[4];
+	float spin[4];
 	float last;
 	CameraOrtho cam;
 	static const float TUGSC;
@@ -35,11 +37,15 @@ private:
 	
 	float score, life;
 	float iscore[4];
+	float sumdist;
+	
+	bool b_endgame, b_firstrun;
+	int lastwinner;
 	
 	Font helv;
 	
 	
-	gl::Texture scoreTexture;
+	gl::Texture scoreTexture, endgameTexture;
 	
 	float wiitug[4][500];
 	bool tugged[4];
@@ -57,21 +63,27 @@ public:
 	void draw();
 	void foo();
 	bool hasTugged(int id);
+	void endgame(int winner);
+	void shutdown();
 };
 
 void fooo()
 {
 	printf("FOOFOO");
+	
 }
 
 void tearApp::prepareSettings(Settings* settings)
 {
 	settings->setWindowSize(1024, 768);
 	wiim = new WiiMgr();
+	b_firstrun = true;
+	lastwinner = -1;
 }
 
 void tearApp::setup()
 {
+	b_endgame = false;
 	debug = false;
 	score = .0f;
 	life = 100.0f;
@@ -85,11 +97,14 @@ void tearApp::setup()
 	blob->push_back(Vec2f(40.0f, 100.0f));
 	blob->push_back(Vec2f(20.0f, 100.0f));
 	
+	origdirs = vector<Vec2f>();
+	origdirs.push_back(Vec2f(-1.0f, -1.0f));
+	origdirs.push_back(Vec2f(1.0f, -1.0f));
+	origdirs.push_back(Vec2f(1.0f, 1.0f));
+	origdirs.push_back(Vec2f(-1.0f, 1.0f));
+	
 	dirs = vector<Vec2f>();
-	dirs.push_back(Vec2f(-1.0f, -1.0f));
-	dirs.push_back(Vec2f(1.0f, -1.0f));
-	dirs.push_back(Vec2f(1.0f, 1.0f));
-	dirs.push_back(Vec2f(-1.0f, 1.0f));
+	dirs.assign(origdirs.begin(), origdirs.end());
 	
 	//colliding = NULL;
 	
@@ -100,13 +115,14 @@ void tearApp::setup()
 		tugctr[i] = .0f;
 		tugged[i] = false;
 		iscore[i] = .0f;
+		spin[i] = .0f;
 	}
 	
 	for(int j = 0; j < 4; j++)
 		for(int i = 0; i < 500; i++)
 			wiitug[j][i] = .0f;
 	
-	last = .0f;
+	last = getElapsedSeconds();
 	
 	cam = CameraOrtho(0, getWindowWidth(), getWindowHeight(), 0, 0, 1000);
 	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
@@ -122,7 +138,7 @@ void tearApp::setup()
 	
 	egen = new EnemyGenerator(gs, 1.0f, 18.0f);
 	
-	wiim->go();
+	if(b_firstrun) wiim->go();
 	
 	TextLayout simple;
 	simple.setFont( Font( "Helvetica", 24 ) );
@@ -142,6 +158,12 @@ void tearApp::mouseDown( MouseEvent event )
 
 void tearApp::keyDown( KeyEvent event )
 {
+	if(b_endgame && event.getChar() == ' ')
+	{
+		b_endgame = false;
+		this->setup();
+	}
+	
 	if( event.getChar() == 'q' ){
 		tug[0] += TUGSC;
 	}
@@ -157,10 +179,26 @@ void tearApp::keyDown( KeyEvent event )
 	if( event.getChar() == 'd' ){
 		debug = !debug;
 	}
+	
+	if( event.getChar() == 'x' ){
+		spin[3] += 3;
+	}
+	if( event.getChar() == 'v' ){
+		spin[3] -= 3;
+	}
 }
 
 void tearApp::update()
 {
+	
+	if(life <= .0f && !b_endgame)
+		endgame(-1);
+	
+	for(int i = 0; i < 4; i++)
+	{
+		if(iscore[i] >= 100.0f && !b_endgame)
+			endgame(i);
+	}
 	
 	
 	float now = getElapsedSeconds();
@@ -169,11 +207,17 @@ void tearApp::update()
 	
 	life -= dt;
 	
+	dirs.clear();
 	// move corners according to tug (indirectly and directly)
 	for(int i = 0; i < 4; i++)
 	{
+		dirs.push_back(origdirs[i]);
+		dirs[i].rotate(spin[i]);
+		
 		if(tug[i] > .0f) tug[i] *= .93f;
 		blob->getPoints()[i] += dirs[i] * tug[i];
+		
+		
 		
 		for(int j = 0; j < 4; j++)
 		{
@@ -196,12 +240,21 @@ void tearApp::update()
 	
 	*centroid /= 4.0f;
 	
-	float sumdist = .0f;
+	sumdist = .0f;
 	
 	// get sum of distances of corner points to centroid
 	for(int i = 0; i < 4; i++)
 	{
 		sumdist += blob->getPoints()[i].distance(*centroid);
+	}
+	
+	if(sumdist > 600.0f)
+	{
+		for(int i = 0; i < 4; i++)
+		{
+			tug[i] += 1.0f;
+		}
+		endgame(-2);
 	}
 	
 	// add "elastic" force to corners, proportional to "tension" in the system
@@ -268,7 +321,15 @@ void tearApp::update()
 		
 		// add tug force if a tug has been detected
 		if(tugged[j]) tug[j] += TUGSC * 3;
+		
+		
+		// ROLL
+//		spin[j] = 2*M_PI*(float)((int)(getElapsedSeconds() * 1000.0f) % 1000)/1000.0f;
+		spin[j] = wiim->a_state_roll[j]/50.0f;
+		
 	}
+	
+	
 	
 	TextLayout simple;
 	simple.setFont( helv );
@@ -284,6 +345,13 @@ void tearApp::update()
 
 bool tearApp::hasTugged(int id)
 {
+	if(tugctr[id] == .0f && wiim->a[id]) 
+	{
+		tugctr[id] = 1.0f;
+		return true;
+		
+	}
+	
 	// find a minimum, then move to right and left to search for maxima
 	// if all has been found, and the "spike" is big enough, and enough time has passed since
 	// the last detection, detect a tug
@@ -347,26 +415,42 @@ void tearApp::draw()
 			glPopMatrix();
 		}
 	
-	// draw blob lines
-	gl::color(Color(1.0f, .0f, .0f));
-	gl::draw(*blob);
-	
-	gl::color(ColorA(1.0f - life/100.0f, life/100.0f, .0f, .5f));
-	
-	glBegin(GL_TRIANGLE_FAN);
-	
-	gl::vertex(*centroid);
-	
-	for(int i = 0; i < 4; i++)
-	{
-		Vec2f& pt = blob->getPoints()[i];
+	if(!(b_endgame && lastwinner == -2)){
+		// draw blob lines
 		
-		gl::vertex(pt);
-	}
+		glLineWidth(3.0f);
+		if(sumdist > 250.0f)
+		{
+			int lvl = (int) (sumdist/100.0f);
+			glLineStipple((int) (sumdist/100.0f), lvl < 4 ? 0xAAAA : 0x8888);
+			glEnable(GL_LINE_STIPPLE);
+		}
+		gl::color(Color(1.0f, .0f, .0f));
+		gl::draw(*blob);
+		glDisable(GL_LINE_STIPPLE);
+		glLineWidth(1.0f);
 	
-	gl::vertex(blob->getPoints()[0]);
-			   
-	glEnd();
+	// draw inner area
+	
+	
+		gl::color(ColorA(1.0f - life/100.0f, life/100.0f, .0f, .5f));
+		
+		glBegin(GL_TRIANGLE_FAN);
+		
+		gl::vertex(*centroid);
+		
+		for(int i = 0; i < 4; i++)
+		{
+			Vec2f& pt = blob->getPoints()[i];
+			
+			gl::vertex(pt);
+		}
+		
+		gl::vertex(blob->getPoints()[0]);
+				   
+		glEnd();
+		
+	}
 	
 	// draw corners
 	for(int i = 0; i < 4; i++)
@@ -385,11 +469,15 @@ void tearApp::draw()
 		
 		
 		
-		gl::color(ColorA(.7f, .7f, .0f, 1.0f));
+		
 		float step = 2 * M_PI / 10.0f;
 		float maxscore = 100.0f;
 		for(float rad = .0f; rad < 2*M_PI*iscore[i]/maxscore; rad += step)
 		{
+			if(rad >= 2*M_PI*iscore[i]/maxscore - step)
+				gl::color(ColorA(.7f, .7f, .0f, (float) ((int)iscore[i] % 10) / 10.0f ));
+			else
+				gl::color(ColorA(.7f, .7f, .0f, 1.0f ));
 			glPushMatrix();
 			gl::translate(Vec2f(math<float>::cos(rad) * 20.0f, -math<float>::sin(rad) * 20.0f));
 			gl::drawSolidCircle(Vec2f(.0f, .0f), 3.0f, 16);
@@ -468,6 +556,44 @@ void tearApp::draw()
 	glColor3f( 1.0f, 1.0f, 1.0f );
 	gl::draw( scoreTexture, Vec2f( cam.getEyePoint().x + 10, cam.getEyePoint().y + getWindowHeight() - scoreTexture.getHeight() - 5 ) );
 	
+	if(b_endgame)
+	{
+		gl::draw( endgameTexture, Vec2f( cam.getEyePoint().x + getWindowWidth()/2 - endgameTexture.getWidth()/2, cam.getEyePoint().y + getWindowHeight()/2 ) );
+	}
+	
+}
+
+void tearApp::endgame(int winner)
+{
+	b_endgame = true;
+	b_firstrun = false;
+	lastwinner = winner;
+	
+	TextLayout simple;
+	simple.setFont( helv );
+	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
+	stringstream ss;
+	
+	if(winner >= 0){
+		ss << "game over - player ";
+		ss << (winner+1);
+		ss << " won. collective score: ";
+		ss << ((int) score);
+	} else if(winner == -1){
+		ss << "game over - you died. collective score: ";
+		ss << ((int) score);
+	} else if(winner == -2){
+		ss << "game over - you were torn apart. collective score: ";
+		ss << ((int) score);
+	}
+	
+	simple.addLine( ss.str() );
+	endgameTexture = gl::Texture( simple.render( false, false ) );
+	
+}
+
+void tearApp::shutdown()
+{
 	
 }
 
