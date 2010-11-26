@@ -7,6 +7,10 @@
 #include "cinder/Thread.h"
 #include "cinder/gl/Texture.h"
 #include "cinder/Text.h"
+#include "cinder/audio/Output.h"
+#include "cinder/audio/Io.h"
+#include "cinder/audio/Callback.h"
+#include "Resources.h"
 #include <sstream>
 
 using namespace ci;
@@ -44,12 +48,23 @@ private:
 	
 	Font helv;
 	
+	audio::SourceRef au_uglyup, au_hurt, au_bg, au_feed;
+	audio::TrackRef ref;
 	
 	gl::Texture scoreTexture, endgameTexture;
 	
 	float wiitug[4][500];
 	bool tugged[4];
 	float tugctr[4];
+	
+	shared_ptr< audio::Callback<tearApp, float> > cb1, cb2, cb3;
+	
+	float mFreqTarget, mFreqTargetQ, mFreqTargetP;
+	float mPhase, mPhaseQ, mPhaseP;
+	float mPhaseAdjust, mPhaseAdjustQ, mPhaseAdjustP;
+	float mMaxFreq, mMaxFreqQ, mMaxFreqP;
+	
+	float enableQ, enableGoodQ, enablePointQ;
 	
 public:
 	
@@ -65,6 +80,9 @@ public:
 	bool hasTugged(int id);
 	void endgame(int winner);
 	void shutdown();
+	void squareWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer );
+	void goodWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer );
+	void pointWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer );
 };
 
 void fooo()
@@ -79,10 +97,46 @@ void tearApp::prepareSettings(Settings* settings)
 	wiim = new WiiMgr();
 	b_firstrun = true;
 	lastwinner = -1;
+	
+	cb1 = audio::createCallback( this, &tearApp::squareWave );
+	cb2 = audio::createCallback( this, &tearApp::goodWave );
+	cb3 = audio::createCallback( this, &tearApp::pointWave );
+	
+	audio::Output::play( cb1 );
+	audio::Output::play( cb2 );
+	audio::Output::play( cb3 );
+	
+	// audio
+	
+	mMaxFreq = 2000.0f;
+	mFreqTarget = 0.0f;
+	mPhase = 0.0f;
+	mPhaseAdjust = 0.0f;
+	
+	mMaxFreqQ = 2000.0f;
+	mFreqTargetQ = 0.0f;
+	mPhaseQ = 0.0f;
+	mPhaseAdjustQ = 0.0f;
+	
+	mMaxFreqP = 2000.0f;
+	mFreqTargetP = 0.0f;
+	mPhaseP = 0.0f;
+	mPhaseAdjustP = 0.0f;
+	enableQ = enableGoodQ = enablePointQ = .0f;
 }
 
 void tearApp::setup()
 {
+	/*
+	au_uglyup = audio::load( loadResource( RES_UGLYUP ) );
+	au_feed = audio::load( loadResource( RES_FEED ) );
+	au_bg = audio::load( loadResource( RES_BG ) );
+	au_hurt = audio::load( loadResource( RES_HURT ) );
+	
+	ref = audio::Output::addTrack(au_bg, true);
+	ref->setLooping(true);
+	 */
+	
 	b_endgame = false;
 	debug = false;
 	score = .0f;
@@ -164,6 +218,13 @@ void tearApp::keyDown( KeyEvent event )
 		this->setup();
 	}
 	
+	if(event.getChar() == 'g')
+	{
+		b_firstrun = false;
+		b_endgame = false;
+		this->setup();
+	}
+	
 	if( event.getChar() == 'q' ){
 		tug[0] += TUGSC;
 	}
@@ -190,6 +251,8 @@ void tearApp::keyDown( KeyEvent event )
 
 void tearApp::update()
 {
+//	if(!ref->isPlaying())
+//		ref->play();
 	
 	if(life <= .0f && !b_endgame)
 		endgame(-1);
@@ -275,6 +338,7 @@ void tearApp::update()
 	// collision detection and reaction between enemies and blob
 	colliding = egen->collideWithBlob();
 	
+	enableQ = enableGoodQ = enablePointQ = .0f;
 	if(colliding)
 	{
 		vector<Enemy*>::iterator it;
@@ -284,14 +348,17 @@ void tearApp::update()
 			{
 				score += .001;
 				life += 3 * dt;
+				enableGoodQ = .2f;
 			}
 			else if((*it)->type == BAD) 
 			{
 				score = math<float>::max(score - .005, .0f);
 				life -= dt;
+				enableQ = .05f;
 			}
 		}
 	}
+	
 	
 	collidingCorners = egen->collideWithCorners();
 	if(collidingCorners)
@@ -300,6 +367,7 @@ void tearApp::update()
 		for(it = collidingCorners->begin(); it < collidingCorners->end(); it++)
 		{
 			iscore[it->corner] = math<float>::min(iscore[it->corner] + dt * 4.0f, 100.0f);
+			enablePointQ = .2f;
 		}
 	}
 	
@@ -341,6 +409,10 @@ void tearApp::update()
 	ss << ((int) life);
 	simple.addLine( ss.str() );
 	scoreTexture = gl::Texture( simple.render( false, false ) );
+	
+	mFreqTargetQ = 200.0f;
+	mFreqTargetP = 400.0f;
+	mFreqTarget = 300.0f;
 }
 
 bool tearApp::hasTugged(int id)
@@ -388,6 +460,8 @@ bool tearApp::hasTugged(int id)
 	}
 	
 	return false;
+	
+	
 	
 }
 
@@ -561,6 +635,25 @@ void tearApp::draw()
 		gl::draw( endgameTexture, Vec2f( cam.getEyePoint().x + getWindowWidth()/2 - endgameTexture.getWidth()/2, cam.getEyePoint().y + getWindowHeight()/2 ) );
 	}
 	
+	// cursors
+	
+	for(int i = 0; i < 4; i++)
+	{
+		if(wiim->lox.timed_lock(boost::get_system_time()+boost::posix_time::milliseconds(10)))
+		{
+			int x = wiim->a_ir_x[i];
+			int y = wiim->a_ir_y[i];
+			
+			wiim->lox.unlock();
+			
+			gl::color(Color(1.0f, 1.0f, 1.0f));
+			
+			gl::drawSolidCircle(Vec2f(x, y), 10.0f, 16);
+		}
+		
+		
+	}
+	
 }
 
 void tearApp::endgame(int winner)
@@ -594,7 +687,52 @@ void tearApp::endgame(int winner)
 
 void tearApp::shutdown()
 {
+	delete gs;
+	delete egen;
+	delete wiim;
+	delete centroid;
+	delete blob;
 	
+	
+}
+
+void tearApp::squareWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer ) 
+{
+	mPhaseAdjustQ = mPhaseAdjustQ * 0.95f + ( mFreqTargetQ * 1.5f / 44100.0f ) * 0.05f;
+	for( int  i = 0; i < ioSampleCount; i++ ) {
+		mPhaseQ += mPhaseAdjustQ;
+		mPhaseQ = mPhaseQ - math<float>::floor( mPhaseQ );
+		float val = enableQ * math<float>::signum(math<float>::sin( mPhaseQ * 2.0f * M_PI ));
+		
+		ioBuffer->mData[i*ioBuffer->mNumberChannels] = val;
+		ioBuffer->mData[i*ioBuffer->mNumberChannels + 1] = val;
+	}
+}
+
+void tearApp::goodWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer ) 
+{
+	mPhaseAdjust = mPhaseAdjust * 0.95f + ( mFreqTarget * 1.5f / 44100.0f ) * 0.05f;
+	for( int  i = 0; i < ioSampleCount; i++ ) {
+		mPhase += mPhaseAdjust;
+		mPhase = mPhase - math<float>::floor( mPhase );
+		float val = enableGoodQ * math<float>::sin( mPhase * 2.0f * M_PI );
+		
+		ioBuffer->mData[i*ioBuffer->mNumberChannels] = val;
+		ioBuffer->mData[i*ioBuffer->mNumberChannels + 1] = val;
+	}
+}
+
+void tearApp::pointWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer ) 
+{
+	mPhaseAdjustP = mPhaseAdjustP * 0.95f + ( mFreqTargetP * 1.5f / 44100.0f ) * 0.05f;
+	for( int  i = 0; i < ioSampleCount; i++ ) {
+		mPhaseP += mPhaseAdjustP;
+		mPhaseP = mPhaseP - math<float>::floor( mPhaseP );
+		float val = enablePointQ * math<float>::sin( mPhaseP * 2.0f * M_PI );
+		
+		ioBuffer->mData[i*ioBuffer->mNumberChannels] = val;
+		ioBuffer->mData[i*ioBuffer->mNumberChannels + 1] = val;
+	}
 }
 
 const float tearApp::TUGSC = 2.8f;

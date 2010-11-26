@@ -32,7 +32,7 @@ public:
 	enemy_type type;
 	
 	Enemy(GameState* gs, float lt, Rand* r);
-	//~Enemy();
+	~Enemy();
 	
 	void update(float dt);
 	void draw();
@@ -55,7 +55,7 @@ private:
 	
 public:
 	EnemyGenerator(GameState* gs, float interval, float lifetime);
-//	~EnemyGenerator();
+	~EnemyGenerator();
 	
 	boost::shared_ptr< vector<Enemy*> > collideWithBlob();
 	boost::shared_ptr< vector<cornerCollision> > collideWithCorners();

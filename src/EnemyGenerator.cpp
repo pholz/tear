@@ -26,6 +26,11 @@ EnemyGenerator::EnemyGenerator(GameState* _gs, float _iv, float _lt)
 	rand = new Rand();
 }
 
+EnemyGenerator::~EnemyGenerator()
+{
+	delete rand;
+}
+
 void EnemyGenerator::update(float dt)
 {
 	last = total;
@@ -45,7 +50,11 @@ void EnemyGenerator::update(float dt)
 	{
 		(*it)->update(dt);
 		if((*it)->expired > (*it)->lifetime)
+		{
+			delete *it;
 			enemies.erase(it);
+		}
+			
 	}
 }
 
@@ -115,6 +124,11 @@ Enemy::Enemy(GameState* _gs, float lt, Rand* rand)
 	}while( insidePolygon(pos, *(gs->blob)) );
 	
 	vel = Vec2f(rand->nextFloat(-VEL, VEL), rand->nextFloat(-VEL, VEL));
+	
+}
+
+Enemy::~Enemy()
+{
 	
 }
 

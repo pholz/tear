@@ -39,6 +39,8 @@ public:
 	void HandleStatus(CWiimote &wm);
 	
 	float a_state_roll[4], a_state_pitch[4];
+	int a_ir_x[4], a_ir_y[4];
 	bool a[4], b[4];
 	boost::shared_ptr<boost::thread> thrd;
+	boost::timed_mutex lox;
 };

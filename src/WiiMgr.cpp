@@ -20,7 +20,7 @@ WiiMgr::WiiMgr()
 	cout << "Searching for wiimotes->.. Turn them on!" << endl;
 	
     //Find the wiimote
-    numFound = wii.Find(1);
+    numFound = wii.Find(5);
 	
     // Search for up to five seconds;
 	
@@ -44,7 +44,8 @@ WiiMgr::WiiMgr()
         wiimote.SetRumbleMode(CWiimote::ON);
         usleep(200000);
         wiimote.SetRumbleMode(CWiimote::OFF);
-		wiimote.SetMotionSensingMode(CWiimote::ON);
+		//wiimote.SetMotionSensingMode(CWiimote::ON);
+		wiimote.IR.SetMode(CIR::ON);
     }
 	
 	for(int i = 0; i < 4; i++)
@@ -53,6 +54,8 @@ WiiMgr::WiiMgr()
 		b[i] = false;
 		a_state_roll[i] = .0f;
 		a_state_pitch[i] = .0f;
+		a_ir_x[i] = 0;
+		a_ir_y[i] = 0;
 	}
 	
 }
@@ -68,7 +71,7 @@ void WiiMgr::foo()
 {
 	while(true){
 		
-		usleep(10000);
+		usleep(50000);
 		update();
 	}
 }
@@ -101,8 +104,10 @@ void WiiMgr::update()
 		{
 			// Use a reference to make working with the iterator handy.
 			CWiimote & wiimote = *i;
+			
 			switch(wiimote.GetEvent())
 			{
+					
 					
 				case CWiimote::EVENT_EVENT:
 					HandleEvent(wiimote);
@@ -125,6 +130,7 @@ void WiiMgr::update()
 				default:
 					break;
 			}
+			
 		}
 	}
 		
@@ -231,6 +237,7 @@ void WiiMgr::HandleEvent(CWiimote &wm)
         printf("%s Home pressed\n", prefixString);
     }
 	
+	/*
     // if the accelerometer is turned on then print angles
     if(wm.isUsingACC())
     {
@@ -244,33 +251,34 @@ void WiiMgr::HandleEvent(CWiimote &wm)
 		a_state_roll[wm.GetID()-1] = roll;
 		a_state_pitch[wm.GetID()-1] = pitch;
     }
+	 */
 	
-    // if(IR tracking is on then print the coordinates
     if(wm.isUsingIR())
-    {
-        std::vector<CIRDot>::iterator i;
-        int x, y;
-        int index;
+	{
+		std::vector<CIRDot>::iterator i;
+		int x, y;
+		int index;
 		
-        printf("%s Num IR Dots: %i\n", prefixString, wm.IR.GetNumDots());
-        printf("%s IR State: %u\n", prefixString, wm.IR.GetState());
+		std::vector<CIRDot>& dots = wm.IR.GetDots();
 		
-        std::vector<CIRDot>& dots = wm.IR.GetDots();
-		
-        for(index = 0, i = dots.begin(); i != dots.end(); ++index, ++i)
-        {
-            if((*i).isVisible())
-            {
-                (*i).GetCoordinate(x, y);
-                printf("%s IR source %i: (%i, %i)\n", prefixString, index, x, y);
+		for(index = 0, i = dots.begin(); i != dots.end(); ++index, ++i)
+		{
+			if((*i).isVisible())
+			{
+				//(*i).GetCoordinate(x, y);
 				
-                wm.IR.GetCursorPosition(x, y);
-                printf("%s IR cursor: (%i, %i)\n", prefixString, x, y);
+				wm.IR.GetCursorPosition(x, y);
+				lox.lock();
+				a_ir_x[wm.GetID()-1] = x;
+				a_ir_y[wm.GetID()-1] = y;
+				lox.unlock();
+				printf("%s IR cursor: (%i, %i)\n", prefixString, x, y);
                 printf("%s IR z distance: %f\n", prefixString, wm.IR.GetDistance());
-            }
-        }
-    }
+			}
+		}
+	}
 	
+    	
     
 }
 

@@ -34,6 +34,12 @@
 		6638B99E126E3B4300C1080A /* speaker.c in Sources */ = {isa = PBXBuildFile; fileRef = 6638B98A126E3B4300C1080A /* speaker.c */; };
 		6638B99F126E3B4300C1080A /* wiic.c in Sources */ = {isa = PBXBuildFile; fileRef = 6638B991126E3B4300C1080A /* wiic.c */; };
 		66A648941270C58B00A9FA34 /* EnemyGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */; };
+		66F4627F127A236C00ED36ED /* s_bg.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627B127A236C00ED36ED /* s_bg.wav */; };
+		66F46280127A236C00ED36ED /* s_feed.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627C127A236C00ED36ED /* s_feed.wav */; };
+		66F46281127A236C00ED36ED /* s_hurt.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627D127A236C00ED36ED /* s_hurt.wav */; };
+		66F46282127A236C00ED36ED /* s_uglyup.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627E127A236C00ED36ED /* s_uglyup.wav */; };
+		66F462BD127A275E00ED36ED /* booyah.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F462BC127A275E00ED36ED /* booyah.wav */; };
+		66F462E6127A2A9100ED36ED /* s4_bg.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F462E5127A2A9100ED36ED /* s4_bg.wav */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -94,6 +100,13 @@
 		6697A7CF126BCDC00091953B /* EnemyGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnemyGenerator.h; path = ../include/EnemyGenerator.h; sourceTree = "<group>"; };
 		6697A7E6126BFC670091953B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../include/util.h; sourceTree = "<group>"; };
 		66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EnemyGenerator.cpp; path = ../src/EnemyGenerator.cpp; sourceTree = SOURCE_ROOT; };
+		66F46277127A22CF00ED36ED /* Resources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Resources.h; sourceTree = "<group>"; };
+		66F4627B127A236C00ED36ED /* s_bg.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s_bg.wav; path = ../resources/s_bg.wav; sourceTree = SOURCE_ROOT; };
+		66F4627C127A236C00ED36ED /* s_feed.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s_feed.wav; path = ../resources/s_feed.wav; sourceTree = SOURCE_ROOT; };
+		66F4627D127A236C00ED36ED /* s_hurt.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s_hurt.wav; path = ../resources/s_hurt.wav; sourceTree = SOURCE_ROOT; };
+		66F4627E127A236C00ED36ED /* s_uglyup.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s_uglyup.wav; path = ../resources/s_uglyup.wav; sourceTree = SOURCE_ROOT; };
+		66F462BC127A275E00ED36ED /* booyah.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = booyah.wav; path = ../resources/booyah.wav; sourceTree = SOURCE_ROOT; };
+		66F462E5127A2A9100ED36ED /* s4_bg.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s4_bg.wav; path = ../resources/s4_bg.wav; sourceTree = SOURCE_ROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* tear.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tear.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -185,7 +198,9 @@
 				6697A7CF126BCDC00091953B /* EnemyGenerator.h */,
 				66A6489C1270C65100A9FA34 /* wiic */,
 				6638B8CF126E27FB00C1080A /* GameState.h */,
+				6638B960126E35C900C1080A /* WiiMgr.h */,
 				32CA4F630368D1EE00C91783 /* tear_Prefix.pch */,
+				66F46277127A22CF00ED36ED /* Resources.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -193,6 +208,12 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				66F462E5127A2A9100ED36ED /* s4_bg.wav */,
+				66F462BC127A275E00ED36ED /* booyah.wav */,
+				66F4627B127A236C00ED36ED /* s_bg.wav */,
+				66F4627C127A236C00ED36ED /* s_feed.wav */,
+				66F4627D127A236C00ED36ED /* s_hurt.wav */,
+				66F4627E127A236C00ED36ED /* s_uglyup.wav */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				00CCAF14116A9FEE008396D5 /* CinderApp.icns */,
 			);
@@ -251,7 +272,6 @@
 			children = (
 				6697A7E6126BFC670091953B /* util.h */,
 				6638B95A126E330300C1080A /* wiicpp.h */,
-				6638B960126E35C900C1080A /* WiiMgr.h */,
 			);
 			name = wiic;
 			sourceTree = "<group>";
@@ -308,6 +328,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */,
+				66F4627F127A236C00ED36ED /* s_bg.wav in Resources */,
+				66F46280127A236C00ED36ED /* s_feed.wav in Resources */,
+				66F46281127A236C00ED36ED /* s_hurt.wav in Resources */,
+				66F46282127A236C00ED36ED /* s_uglyup.wav in Resources */,
+				66F462BD127A275E00ED36ED /* booyah.wav in Resources */,
+				66F462E6127A2A9100ED36ED /* s4_bg.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
