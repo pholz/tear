@@ -40,6 +40,10 @@
 		66F46282127A236C00ED36ED /* s_uglyup.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627E127A236C00ED36ED /* s_uglyup.wav */; };
 		66F462BD127A275E00ED36ED /* booyah.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F462BC127A275E00ED36ED /* booyah.wav */; };
 		66F462E6127A2A9100ED36ED /* s4_bg.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F462E5127A2A9100ED36ED /* s4_bg.wav */; };
+		66F8B9F112A0765500A3C497 /* OscBundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66F8B9ED12A0765500A3C497 /* OscBundle.cpp */; };
+		66F8B9F212A0765500A3C497 /* OscListener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66F8B9EE12A0765500A3C497 /* OscListener.cpp */; };
+		66F8B9F312A0765500A3C497 /* OscMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66F8B9EF12A0765500A3C497 /* OscMessage.cpp */; };
+		66F8B9F412A0765500A3C497 /* OscSender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66F8B9F012A0765500A3C497 /* OscSender.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -107,6 +111,10 @@
 		66F4627E127A236C00ED36ED /* s_uglyup.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s_uglyup.wav; path = ../resources/s_uglyup.wav; sourceTree = SOURCE_ROOT; };
 		66F462BC127A275E00ED36ED /* booyah.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = booyah.wav; path = ../resources/booyah.wav; sourceTree = SOURCE_ROOT; };
 		66F462E5127A2A9100ED36ED /* s4_bg.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s4_bg.wav; path = ../resources/s4_bg.wav; sourceTree = SOURCE_ROOT; };
+		66F8B9ED12A0765500A3C497 /* OscBundle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OscBundle.cpp; sourceTree = "<group>"; };
+		66F8B9EE12A0765500A3C497 /* OscListener.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OscListener.cpp; sourceTree = "<group>"; };
+		66F8B9EF12A0765500A3C497 /* OscMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OscMessage.cpp; sourceTree = "<group>"; };
+		66F8B9F012A0765500A3C497 /* OscSender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OscSender.cpp; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* tear.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tear.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -139,6 +147,10 @@
 				6638B961126E35C900C1080A /* WiiMgr.cpp */,
 				66A6489D1270C65800A9FA34 /* wiic */,
 				00BAE6590E7ED9C10018A608 /* tearApp.cpp */,
+				66F8B9ED12A0765500A3C497 /* OscBundle.cpp */,
+				66F8B9EE12A0765500A3C497 /* OscListener.cpp */,
+				66F8B9EF12A0765500A3C497 /* OscMessage.cpp */,
+				66F8B9F012A0765500A3C497 /* OscSender.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -361,6 +373,10 @@
 				6638B99E126E3B4300C1080A /* speaker.c in Sources */,
 				6638B99F126E3B4300C1080A /* wiic.c in Sources */,
 				66A648941270C58B00A9FA34 /* EnemyGenerator.cpp in Sources */,
+				66F8B9F112A0765500A3C497 /* OscBundle.cpp in Sources */,
+				66F8B9F212A0765500A3C497 /* OscListener.cpp in Sources */,
+				66F8B9F312A0765500A3C497 /* OscMessage.cpp in Sources */,
+				66F8B9F412A0765500A3C497 /* OscSender.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,6 +399,7 @@
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				OTHER_LDFLAGS = (
+					../../../blocks/osc/lib/macosx/osc.a,
 					"-framework",
 					IOBluetooth,
 					"\"$(CINDER_PATH)/lib/libcinder_d.a\"",
@@ -426,7 +443,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include";
+				USER_HEADER_SEARCH_PATHS = "../../../blocks/osc/include/ \"$(CINDER_PATH)/include\" ../include";
 			};
 			name = Debug;
 		};

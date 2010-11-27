@@ -12,6 +12,7 @@
 #include "cinder/audio/Callback.h"
 #include "Resources.h"
 #include <sstream>
+#include "OscListener.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -66,6 +67,11 @@ private:
 	
 	float enableQ, enableGoodQ, enablePointQ;
 	
+	osc::Listener listener;
+	float osc_x[4], osc_y[4];
+	Vec2f osc_irvec[4];
+	bool osc_btn_a[4];
+	
 public:
 	
 	GameState* gs;
@@ -83,6 +89,7 @@ public:
 	void squareWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer );
 	void goodWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer );
 	void pointWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer );
+	void oscUpdate();
 };
 
 void fooo()
@@ -94,7 +101,7 @@ void fooo()
 void tearApp::prepareSettings(Settings* settings)
 {
 	settings->setWindowSize(1024, 768);
-	wiim = new WiiMgr();
+//	wiim = new WiiMgr();
 	b_firstrun = true;
 	lastwinner = -1;
 	
@@ -137,6 +144,8 @@ void tearApp::setup()
 	ref->setLooping(true);
 	 */
 	
+	listener.setup(3000);
+	
 	b_endgame = false;
 	debug = false;
 	score = .0f;
@@ -170,6 +179,10 @@ void tearApp::setup()
 		tugged[i] = false;
 		iscore[i] = .0f;
 		spin[i] = .0f;
+		osc_x[i] = .0f;
+		osc_y[i] = .0f;
+		osc_btn_a[i] = false;
+		osc_irvec[i] = Vec2f(0, 0);
 	}
 	
 	for(int j = 0; j < 4; j++)
@@ -192,7 +205,7 @@ void tearApp::setup()
 	
 	egen = new EnemyGenerator(gs, 1.0f, 18.0f);
 	
-	if(b_firstrun) wiim->go();
+//	if(b_firstrun) wiim->go();
 	
 	TextLayout simple;
 	simple.setFont( Font( "Helvetica", 24 ) );
@@ -249,10 +262,64 @@ void tearApp::keyDown( KeyEvent event )
 	}
 }
 
+void tearApp::oscUpdate()
+{
+	while (listener.hasWaitingMessages()) {
+		osc::Message message;
+		listener.getNextMessage(&message);
+		
+		string addr = message.getAddress();
+		
+		if((addr == "/wii/1/ir" ||
+			addr == "/wii/2/ir" ||
+			addr == "/wii/3/ir" ||
+			addr == "/wii/4/ir" ) && message.getNumArgs() == 2)
+		{
+			try {
+				
+				
+				int num = (int) addr[5] - (int) '0';
+				
+				osc_x[num] = message.getArgAsFloat(0);
+				osc_y[num] = message.getArgAsFloat(1);
+				
+				osc_irvec[num] = *centroid + Vec2f( (osc_x[num] - .5f) * getWindowWidth(), -(osc_y[num] - .5f) * getWindowHeight());
+				
+				console() << num << ": " << osc_x[num] << " / " << osc_y[num] << endl;
+				
+			} catch (...) {
+				console() << "Exception reading argument as float" << std::endl;
+			}
+		}
+		else if((addr == "/wii/1/button/A" ||
+				   addr == "/wii/2/button/A" ||
+				   addr == "/wii/3/button/A" ||
+				   addr == "/wii/4/button/A" ) && message.getNumArgs() == 1)
+		{
+			
+			try {
+				
+				
+				int num = (int) addr[5] - (int) '0';
+				
+				if(message.getArgAsInt32(0)) osc_btn_a[num] = true;
+				else						 osc_btn_a[num] = false;
+				
+				console() << num << ": A " << (osc_btn_a[num] ? "on" : "off") << endl;
+				
+			} catch (...) {
+				console() << "Exception reading argument as int" << std::endl;
+			}
+		}
+	}
+}
+
 void tearApp::update()
 {
 //	if(!ref->isPlaying())
 //		ref->play();
+	
+	oscUpdate();
 	
 	if(life <= .0f && !b_endgame)
 		endgame(-1);
@@ -270,12 +337,11 @@ void tearApp::update()
 	
 	life -= dt;
 	
-	dirs.clear();
+	//dirs.clear();
 	// move corners according to tug (indirectly and directly)
 	for(int i = 0; i < 4; i++)
 	{
-		dirs.push_back(origdirs[i]);
-		dirs[i].rotate(spin[i]);
+		dirs[i] = (osc_irvec[i] - blob->getPoints()[i]).normalized();
 		
 		if(tug[i] > .0f) tug[i] *= .93f;
 		blob->getPoints()[i] += dirs[i] * tug[i];
@@ -371,6 +437,7 @@ void tearApp::update()
 		}
 	}
 	
+	/*
 	// advance "history" of tugs per wiimote
 	for(int j = 0; j < 4; j++)
 	{
@@ -393,10 +460,12 @@ void tearApp::update()
 		
 		// ROLL
 //		spin[j] = 2*M_PI*(float)((int)(getElapsedSeconds() * 1000.0f) % 1000)/1000.0f;
-		spin[j] = wiim->a_state_roll[j]/50.0f;
+		spin[j] = .0f;
 		
 	}
-	
+	 */
+	for(int j = 0; j < 4; j++)
+		if(hasTugged(j)) tug[j] += TUGSC * 0.5f;
 	
 	
 	TextLayout simple;
@@ -417,49 +486,8 @@ void tearApp::update()
 
 bool tearApp::hasTugged(int id)
 {
-	if(tugctr[id] == .0f && wiim->a[id]) 
-	{
-		tugctr[id] = 1.0f;
-		return true;
 		
-	}
-	
-	// find a minimum, then move to right and left to search for maxima
-	// if all has been found, and the "spike" is big enough, and enough time has passed since
-	// the last detection, detect a tug
-	
-	float max1 = .0f, min = .0f, max2 = .0f;
-	int mindex = 0;
-	
-	for(int i = 450; i < 500; i++)
-	{
-		min = math<float>::min(min, wiitug[id][i]);
-		mindex = i;
-	}
-		
-	
-	if(min < -20.0f)
-	{
-		for(int i = mindex; i < math<int>::min(mindex+30,500); i++)
-		{
-			max1 = math<float>::max(max1, wiitug[id][i]);
-		}
-		
-		for(int i = mindex; i > math<int>::max(mindex-30,450); i--)
-		{
-			max2 = math<float>::max(max1, wiitug[id][i]);
-		}
-		
-		
-		if(tugctr[id] == .0f && max1 > .0f && max2 > .0f && math<float>::abs(max1-max2) < 20.0f)
-		{
-			tugctr[id] = 1.0f;
-			return true;
-			
-		}
-	}
-	
-	return false;
+	return osc_btn_a[id];
 	
 	
 	
@@ -639,16 +667,16 @@ void tearApp::draw()
 	
 	for(int i = 0; i < 4; i++)
 	{
-		if(wiim->lox.timed_lock(boost::get_system_time()+boost::posix_time::milliseconds(10)))
+		//if(wiim->lox.timed_lock(boost::get_system_time()+boost::posix_time::milliseconds(10)))
 		{
-			int x = wiim->a_ir_x[i];
-			int y = wiim->a_ir_y[i];
+			//int x = wiim->a_ir_x[i];
+			//int y = wiim->a_ir_y[i];
 			
-			wiim->lox.unlock();
+			//wiim->lox.unlock();
 			
 			gl::color(Color(1.0f, 1.0f, 1.0f));
 			
-			gl::drawSolidCircle(Vec2f(x, y), 10.0f, 16);
+			gl::drawSolidCircle(osc_irvec[i], 10.0f, 16);
 		}
 		
 		
