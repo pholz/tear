@@ -30,6 +30,8 @@ public:
 	GameState* gs;
 	float lifetime, expired;
 	enemy_type type;
+	Rand* rand;
+	float r0, r1, r2, speed;
 	
 	Enemy(GameState* gs, float lt, Rand* r);
 	~Enemy();

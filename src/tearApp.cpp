@@ -72,6 +72,12 @@ private:
 	Vec2f osc_irvec[4];
 	bool osc_btn_a[4];
 	
+	Color playerColor[4];
+	
+	int mode;
+	
+	Rand *rand;
+	
 public:
 	
 	GameState* gs;
@@ -146,10 +152,18 @@ void tearApp::setup()
 	
 	listener.setup(3000);
 	
+	rand = new Rand();
+	
 	b_endgame = false;
 	debug = false;
 	score = .0f;
 	life = 100.0f;
+	mode = 1;
+	
+	playerColor[0] = Color(1.0f, .0f, 1.0f);
+	playerColor[1] = Color(1.0f, .1f, .02f);
+	playerColor[2] = Color(.1f, 1.0f, .02f);
+	playerColor[3] = Color(.02f, .8f, 1.0f);
 	
 	helv = Font("Helvetica", 24);
 	
@@ -259,6 +273,19 @@ void tearApp::keyDown( KeyEvent event )
 	}
 	if( event.getChar() == 'v' ){
 		spin[3] -= 3;
+	}
+	if( event.getChar() == '1' ){
+		mode = 1;
+	}
+	if( event.getChar() == '2' ){
+		mode = 2;
+	}
+	if( event.getChar() == '3' ){
+		mode = 3;
+	}
+	
+	if( event.getChar() == '4' ){
+		mode = 4;
 	}
 }
 
@@ -465,7 +492,19 @@ void tearApp::update()
 	}
 	 */
 	for(int j = 0; j < 4; j++)
-		if(hasTugged(j)) tug[j] += TUGSC * 0.5f;
+	{
+		if(j+1 > mode)
+		{
+			osc_irvec[j] = blob->getPoints()[j] - *centroid + Vec2f(rand->nextFloat(-1.0f, 1.0f), rand->nextFloat(-1.0f, 1.0f)) * 10.0f;
+			if(rand->nextInt(100) > 98) tug[j] += TUGSC * 0.5f;
+		}
+		//else
+		//{
+			if(hasTugged(j)) tug[j] += TUGSC * 0.5f;
+		//}
+
+	}
+		
 	
 	
 	TextLayout simple;
@@ -501,7 +540,8 @@ void tearApp::draw()
 	cam.lookAt(Vec3f(centroid->x - getWindowWidth()/2, centroid->y - getWindowHeight()/2, 10.0f), Vec3f(centroid->x - getWindowWidth()/2, centroid->y - getWindowHeight()/2, .0f));
 	gl::setMatrices(cam);
 	
-	gl::clear( Color( 0, 0, 0 ) ); 
+	//gl::clear( Color( 26.0f/255.0f, 33.0f/255.0f, 53.0f/255.0f ) ); 
+	gl::clear( Color( .3f, .3f, .3f ) ); 
 	
 	// draw the background grid, total -10000 to 10000, but clip everything outside the frame
 	for(int i = 0; i < 100; i++)
@@ -535,7 +575,7 @@ void tearApp::draw()
 	// draw inner area
 	
 	
-		gl::color(ColorA(1.0f - life/100.0f, life/100.0f, .0f, .5f));
+		gl::color(ColorA(1.0f - life/100.0f, .0f, life/100.0f, .5f));
 		
 		glBegin(GL_TRIANGLE_FAN);
 		
@@ -562,11 +602,12 @@ void tearApp::draw()
 		
 		gl::translate(pt);
 		
-		gl::color(Color(1.0f, .0f, .0f));
+		gl::color(Color(.0f, .0f, .0f));
 		gl::drawStrokedCircle(Vec2f(.0f, .0f), 5.0f, 32);
-		gl::drawVector(Vec3f(.0f, .0f, .0f), Vec3f(dirs[i].x, dirs[i].y, .0f) * 10);
 		
-		gl::color(Color(.7f, .7f, .0f));
+		gl::color(ColorA(playerColor[i], .5f));
+		gl::drawVector(Vec3f(.0f, .0f, .0f), Vec3f(osc_irvec[i].x, osc_irvec[i].y, .0f) - Vec3f(pt.x, pt.y, .0f));
+		gl::color(playerColor[i]);
 		gl::drawSolidCircle(Vec2f(.0f, .0f), 4.8f, 32);
 		
 		
@@ -577,9 +618,9 @@ void tearApp::draw()
 		for(float rad = .0f; rad < 2*M_PI*iscore[i]/maxscore; rad += step)
 		{
 			if(rad >= 2*M_PI*iscore[i]/maxscore - step)
-				gl::color(ColorA(.7f, .7f, .0f, (float) ((int)iscore[i] % 10) / 10.0f ));
+				gl::color(ColorA(playerColor[i], (float) ((int)iscore[i] % 10) / 10.0f ));
 			else
-				gl::color(ColorA(.7f, .7f, .0f, 1.0f ));
+				gl::color(ColorA(playerColor[i], 1.0f ));
 			glPushMatrix();
 			gl::translate(Vec2f(math<float>::cos(rad) * 20.0f, -math<float>::sin(rad) * 20.0f));
 			gl::drawSolidCircle(Vec2f(.0f, .0f), 3.0f, 16);
@@ -674,9 +715,9 @@ void tearApp::draw()
 			
 			//wiim->lox.unlock();
 			
-			gl::color(Color(1.0f, 1.0f, 1.0f));
+			gl::color(playerColor[i]);
 			
-			gl::drawSolidCircle(osc_irvec[i], 10.0f, 16);
+			gl::drawStrokedCircle(osc_irvec[i], 10.0f, 16);
 		}
 		
 		

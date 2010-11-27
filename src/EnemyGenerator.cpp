@@ -113,11 +113,19 @@ Enemy::Enemy(GameState* _gs, float lt, Rand* rand)
 	expired = .0f;
 	gs = _gs;
 	int ty = rand->nextInt(0,10);
+	this->rand = rand;
 	
 	if(ty < 6) type = BAD;
 	else if(ty < 8) type = UGLY;
 	else type = GOOD;
 	
+	if(type == BAD)
+	{
+		r0 = rand->nextFloat(4.0f,10.0f);
+		r1 = rand->nextFloat(4.0f,10.0f);
+		r2 = rand->nextFloat(4.0f,10.0f);
+		speed = rand->nextFloat(25.0f,55.0f);
+	}
 	
 	do{
 		pos = Vec2f(rand->nextFloat(gs->centroid->x-500, gs->centroid->x+500), rand->nextFloat(gs->centroid->y-500, gs->centroid->y+500));
@@ -146,10 +154,26 @@ void Enemy::draw()
 	if(type == GOOD)
 		gl::color(Color(.7f, .9f, 1.0f));
 	else if(type == BAD)
-		gl::color(Color(1.0f, .1f, 1.0f));
+		gl::color(Color(1.0f, .3f, .0f));
 	else
-		gl::color(Color(1.0f, 1.0f, .1f));
-	gl::drawSolidCircle(Vec2f(.0f, .0f), 10.0f, 32);
+		gl::color(Color(1.0f, 1.0f, 1.0f));
+	
+	if(type == BAD)
+	{
+		gl::rotate( M_PI/2 + expired*speed);
+		gl::translate(Vec2f(-13.0f,-5.0f));
+		gl::drawSolidCircle(Vec2f(.0f, .0f), r0, 32);
+		gl::translate(Vec2f(13.0f,-5.0f));
+		gl::drawSolidCircle(Vec2f(.0f, .0f), r1, 32);
+		gl::translate(Vec2f(.0f,13.0f));
+		gl::drawSolidCircle(Vec2f(.0f, .0f), r2, 32);
+		
+	} else {
+		gl::drawSolidCircle(Vec2f(.0f, .0f), 10.0f, 32);
+	}
+	
 	
 	glPopMatrix();
+	
+	
 }
