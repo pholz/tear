@@ -48,7 +48,7 @@ typedef struct
 
 class EnemyGenerator {
 private:
-	vector<Enemy*> enemies;
+	
 	vector<Enemy*> uglies;
 	GameState* gs;
 	float interval, lifetime;
@@ -56,6 +56,8 @@ private:
 	Rand* rand;
 	
 public:
+	vector<Enemy*> enemies;
+	
 	EnemyGenerator(GameState* gs, float interval, float lifetime);
 	~EnemyGenerator();
 	

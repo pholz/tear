@@ -158,7 +158,7 @@ void tearApp::setup()
 	debug = false;
 	score = .0f;
 	life = 100.0f;
-	mode = 1;
+	mode = 0;
 	
 	playerColor[0] = Color(1.0f, .0f, 1.0f);
 	playerColor[1] = Color(1.0f, .1f, .02f);
@@ -275,17 +275,17 @@ void tearApp::keyDown( KeyEvent event )
 		spin[3] -= 3;
 	}
 	if( event.getChar() == '1' ){
-		mode = 1;
+		mode = 0;
 	}
 	if( event.getChar() == '2' ){
-		mode = 2;
+		mode = 1;
 	}
 	if( event.getChar() == '3' ){
-		mode = 3;
+		mode = 2;
 	}
 	
 	if( event.getChar() == '4' ){
-		mode = 4;
+		mode = 3;
 	}
 }
 
@@ -305,7 +305,7 @@ void tearApp::oscUpdate()
 			try {
 				
 				
-				int num = (int) addr[5] - (int) '0';
+				int num = (int) addr[5] - (int) '0' - 1;
 				
 				osc_x[num] = message.getArgAsFloat(0);
 				osc_y[num] = message.getArgAsFloat(1);
@@ -327,7 +327,7 @@ void tearApp::oscUpdate()
 			try {
 				
 				
-				int num = (int) addr[5] - (int) '0';
+				int num = (int) addr[5] - (int) '0' - 1;
 				
 				if(message.getArgAsInt32(0)) osc_btn_a[num] = true;
 				else						 osc_btn_a[num] = false;
@@ -371,18 +371,14 @@ void tearApp::update()
 		dirs[i] = (osc_irvec[i] - blob->getPoints()[i]).normalized();
 		
 		if(tug[i] > .0f) tug[i] *= .93f;
-		blob->getPoints()[i] += dirs[i] * tug[i];
-		
-		
-		
+		if(blob->getPoints()[i].distance(osc_irvec[i]) > 0.0f)
+			blob->getPoints()[i] += dirs[i] * tug[i] * math<float>::min(blob->getPoints()[i].distance(osc_irvec[i]), 50.0f) / 50.0f;
+
 		for(int j = 0; j < 4; j++)
 		{
 			if(j == i) continue;
-			blob->getPoints()[i] += dirs[j] * tug[j] * 0.3f;
-			
+			blob->getPoints()[i] += dirs[j] * tug[j] * 0.3f;	
 		}
-		
-		
 	}
 	
 	centroid->x = .0f;
@@ -491,21 +487,65 @@ void tearApp::update()
 		
 	}
 	 */
+	
+	// AI...
 	for(int j = 0; j < 4; j++)
 	{
-		if(j+1 > mode)
+		if(j > mode)
 		{
-			osc_irvec[j] = blob->getPoints()[j] - *centroid + Vec2f(rand->nextFloat(-1.0f, 1.0f), rand->nextFloat(-1.0f, 1.0f)) * 10.0f;
-			if(rand->nextInt(100) > 98) tug[j] += TUGSC * 0.5f;
+			Vec2f pt = blob->getPoints()[j];
+			osc_irvec[j] = 2 * (pt - *centroid);
+			dirs[j] = (osc_irvec[j] - pt).normalized();
+			dirs[j].rotate(rand->nextFloat(-3.0f, 3.0f));
+			
+			/*
+			Vec2f sumvec(.0f, .0f);
+			for(int k = 3; k < 4; k++)
+			{
+				if(j!=k && k > mode)
+				{
+					sumvec += dirs[k];
+				}
+				 
+			}
+			
+			if(sumvec.length() > .0f)
+			{
+				osc_irvec[j] = (blob->getPoints()[j] - *centroid) * .5f;
+				dirs[j] = - sumvec.normalized();
+			}
+			 */
+			
+			Enemy* closest = NULL;
+			float mindist = 1000000.0f;
+			vector<Enemy*>::iterator it;
+			for(it = egen->enemies.begin(); it < egen->enemies.end(); it++)
+			{
+				if(((*it)->type == UGLY || (*it)->type == GOOD) && (*it)->pos.distance(pt) < mindist)
+				{
+					closest = (*it);
+					mindist = (*it)->pos.distance(pt);
+					
+				}
+				
+			}
+			
+			
+			if(closest)
+			{
+				osc_irvec[j] = closest->pos;
+				dirs[j] = (osc_irvec[j] - pt).normalized();
+			}
+				
+			
+			if(rand->nextInt(100) > 87) tug[j] += TUGSC * 0.5f;
 		}
-		//else
+	//	else
 		//{
 			if(hasTugged(j)) tug[j] += TUGSC * 0.5f;
 		//}
 
 	}
-		
-	
 	
 	TextLayout simple;
 	simple.setFont( helv );
@@ -697,7 +737,16 @@ void tearApp::draw()
 	
 	// draw scores
 	glColor3f( 1.0f, 1.0f, 1.0f );
-	gl::draw( scoreTexture, Vec2f( cam.getEyePoint().x + 10, cam.getEyePoint().y + getWindowHeight() - scoreTexture.getHeight() - 5 ) );
+	
+	
+	glPushMatrix();
+	
+	gl::translate(Vec2f(cam.getEyePoint().x + getWindowWidth() / 2.0f, cam.getEyePoint().y + 50.0f));
+	
+	gl::color(ColorA(1.0f - life/100.0f, .0f, life/100.0f, .9f));
+	gl::drawSolidRect(Rectf(-life*3.0f, .0f, life*3.0f, 10.0f));
+	
+	glPopMatrix();
 	
 	if(b_endgame)
 	{
@@ -708,19 +757,9 @@ void tearApp::draw()
 	
 	for(int i = 0; i < 4; i++)
 	{
-		//if(wiim->lox.timed_lock(boost::get_system_time()+boost::posix_time::milliseconds(10)))
-		{
-			//int x = wiim->a_ir_x[i];
-			//int y = wiim->a_ir_y[i];
+		gl::color(playerColor[i]);
 			
-			//wiim->lox.unlock();
-			
-			gl::color(playerColor[i]);
-			
-			gl::drawStrokedCircle(osc_irvec[i], 10.0f, 16);
-		}
-		
-		
+		gl::drawStrokedCircle(osc_irvec[i], 10.0f, 16);
 	}
 	
 }
