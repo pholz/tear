@@ -33,6 +33,8 @@
 		6638B99D126E3B4300C1080A /* nunchuk.c in Sources */ = {isa = PBXBuildFile; fileRef = 6638B988126E3B4300C1080A /* nunchuk.c */; };
 		6638B99E126E3B4300C1080A /* speaker.c in Sources */ = {isa = PBXBuildFile; fileRef = 6638B98A126E3B4300C1080A /* speaker.c */; };
 		6638B99F126E3B4300C1080A /* wiic.c in Sources */ = {isa = PBXBuildFile; fileRef = 6638B991126E3B4300C1080A /* wiic.c */; };
+		664ECD4012A5C727008685EC /* Particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 664ECD3E12A5C726008685EC /* Particle.cpp */; };
+		664ECD4112A5C727008685EC /* ParticleGen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 664ECD3F12A5C727008685EC /* ParticleGen.cpp */; };
 		66A648941270C58B00A9FA34 /* EnemyGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */; };
 		66F4627F127A236C00ED36ED /* s_bg.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627B127A236C00ED36ED /* s_bg.wav */; };
 		66F46280127A236C00ED36ED /* s_feed.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627C127A236C00ED36ED /* s_feed.wav */; };
@@ -101,6 +103,11 @@
 		6638B991126E3B4300C1080A /* wiic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = wiic.c; path = ../src/wiic.c; sourceTree = "<group>"; };
 		6638B992126E3B4300C1080A /* wiic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wiic.h; path = ../include/wiic.h; sourceTree = "<group>"; };
 		6638BB01126E97DE00C1080A /* ts-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ts-Info.plist"; sourceTree = "<group>"; };
+		664ECD3C12A5C720008685EC /* Particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Particle.h; sourceTree = "<group>"; };
+		664ECD3D12A5C720008685EC /* ParticleGen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ParticleGen.h; sourceTree = "<group>"; };
+		664ECD3E12A5C726008685EC /* Particle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Particle.cpp; sourceTree = "<group>"; };
+		664ECD3F12A5C727008685EC /* ParticleGen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleGen.cpp; sourceTree = "<group>"; };
+		664ECD5112A5CA5E008685EC /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
 		6697A7CF126BCDC00091953B /* EnemyGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnemyGenerator.h; path = ../include/EnemyGenerator.h; sourceTree = "<group>"; };
 		6697A7E6126BFC670091953B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../include/util.h; sourceTree = "<group>"; };
 		66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EnemyGenerator.cpp; path = ../src/EnemyGenerator.cpp; sourceTree = SOURCE_ROOT; };
@@ -143,6 +150,8 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				664ECD3E12A5C726008685EC /* Particle.cpp */,
+				664ECD3F12A5C727008685EC /* ParticleGen.cpp */,
 				66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */,
 				6638B961126E35C900C1080A /* WiiMgr.cpp */,
 				66A6489D1270C65800A9FA34 /* wiic */,
@@ -207,12 +216,15 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				664ECD3C12A5C720008685EC /* Particle.h */,
+				664ECD3D12A5C720008685EC /* ParticleGen.h */,
 				6697A7CF126BCDC00091953B /* EnemyGenerator.h */,
 				66A6489C1270C65100A9FA34 /* wiic */,
 				6638B8CF126E27FB00C1080A /* GameState.h */,
 				6638B960126E35C900C1080A /* WiiMgr.h */,
 				32CA4F630368D1EE00C91783 /* tear_Prefix.pch */,
 				66F46277127A22CF00ED36ED /* Resources.h */,
+				664ECD5112A5CA5E008685EC /* common.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -377,6 +389,8 @@
 				66F8B9F212A0765500A3C497 /* OscListener.cpp in Sources */,
 				66F8B9F312A0765500A3C497 /* OscMessage.cpp in Sources */,
 				66F8B9F412A0765500A3C497 /* OscSender.cpp in Sources */,
+				664ECD4012A5C727008685EC /* Particle.cpp in Sources */,
+				664ECD4112A5C727008685EC /* ParticleGen.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

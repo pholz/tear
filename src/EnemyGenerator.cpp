@@ -156,7 +156,7 @@ void Enemy::draw()
 	else if(type == BAD)
 		gl::color(Color(1.0f, .3f, .0f));
 	else
-		gl::color(Color(1.0f, 1.0f, 1.0f));
+		gl::color(Color(1.0f, 1.0f, .4f));
 	
 	if(type == BAD)
 	{
@@ -168,6 +168,8 @@ void Enemy::draw()
 		gl::translate(Vec2f(.0f,13.0f));
 		gl::drawSolidCircle(Vec2f(.0f, .0f), r2, 32);
 		
+	} else if(type == GOOD){
+		gl::drawSolidCircle(Vec2f(.0f, .0f), 10.0f, 6);
 	} else {
 		gl::drawSolidCircle(Vec2f(.0f, .0f), 10.0f, 32);
 	}

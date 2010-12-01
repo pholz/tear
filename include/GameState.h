@@ -6,9 +6,7 @@
  *  Copyright 2010 __MyCompanyName__. All rights reserved.
  *
  */
-#include "cinder/Cinder.h"
-#include "cinder/Vector.h"
-#include "cinder/PolyLine.h"
+#include "common.h"
 
 using namespace ci;
 

@@ -1,18 +1,15 @@
-#include "cinder/app/AppBasic.h"
-#include "cinder/gl/gl.h"
-#include "cinder/Camera.h"
-#include "cinder/CinderMath.h"
+//#include "common.h"
+#include "ParticleGen.h"
 #include "EnemyGenerator.h"
 #include "WiiMgr.h"
-#include "cinder/Thread.h"
-#include "cinder/gl/Texture.h"
-#include "cinder/Text.h"
-#include "cinder/audio/Output.h"
-#include "cinder/audio/Io.h"
-#include "cinder/audio/Callback.h"
 #include "Resources.h"
 #include <sstream>
 #include "OscListener.h"
+#include "OscSender.h"
+
+#define OSC_SEND_HOST "localhost"
+#define OSC_SEND_PORT 5000
+#define OSC_RECEIVE_PORT 3000
 
 using namespace ci;
 using namespace ci::app;
@@ -32,13 +29,15 @@ private:
 	float tug[4];
 	float spin[4];
 	float last;
-	CameraOrtho cam;
+	CameraOrtho camO;
+	CameraPersp cam;
 	static const float TUGSC;
 	EnemyGenerator* egen;
-	WiiMgr* wiim;
+	ParticleGen* partgen;
 	bool debug;
 	boost::shared_ptr<vector<Enemy*> > colliding;
 	boost::shared_ptr<vector<cornerCollision> > collidingCorners;
+	bool colliding_good, colliding_bad;
 	
 	float score, life;
 	float iscore[4];
@@ -68,6 +67,7 @@ private:
 	float enableQ, enableGoodQ, enablePointQ;
 	
 	osc::Listener listener;
+	osc::Sender sender;
 	float osc_x[4], osc_y[4];
 	Vec2f osc_irvec[4];
 	bool osc_btn_a[4];
@@ -77,6 +77,9 @@ private:
 	int mode;
 	
 	Rand *rand;
+	
+	// tune
+	float zoom;
 	
 public:
 	
@@ -88,7 +91,6 @@ public:
 	void keyDown( KeyEvent event );
 	void update();
 	void draw();
-	void foo();
 	bool hasTugged(int id);
 	void endgame(int winner);
 	void shutdown();
@@ -96,18 +98,13 @@ public:
 	void goodWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer );
 	void pointWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer );
 	void oscUpdate();
+	void oscSend(string address, float value);
 };
-
-void fooo()
-{
-	printf("FOOFOO");
-	
-}
 
 void tearApp::prepareSettings(Settings* settings)
 {
 	settings->setWindowSize(1024, 768);
-//	wiim = new WiiMgr();
+//	settings->setFullScreen(true);
 	b_firstrun = true;
 	lastwinner = -1;
 	
@@ -140,17 +137,8 @@ void tearApp::prepareSettings(Settings* settings)
 
 void tearApp::setup()
 {
-	/*
-	au_uglyup = audio::load( loadResource( RES_UGLYUP ) );
-	au_feed = audio::load( loadResource( RES_FEED ) );
-	au_bg = audio::load( loadResource( RES_BG ) );
-	au_hurt = audio::load( loadResource( RES_HURT ) );
-	
-	ref = audio::Output::addTrack(au_bg, true);
-	ref->setLooping(true);
-	 */
-	
-	listener.setup(3000);
+	sender.setup(OSC_SEND_HOST, OSC_SEND_PORT);
+	listener.setup(OSC_RECEIVE_PORT);
 	
 	rand = new Rand();
 	
@@ -159,6 +147,10 @@ void tearApp::setup()
 	score = .0f;
 	life = 100.0f;
 	mode = 0;
+	
+	zoom = 350.0f;
+	
+	colliding_good = colliding_bad = false;
 	
 	playerColor[0] = Color(1.0f, .0f, 1.0f);
 	playerColor[1] = Color(1.0f, .1f, .02f);
@@ -183,8 +175,6 @@ void tearApp::setup()
 	dirs = vector<Vec2f>();
 	dirs.assign(origdirs.begin(), origdirs.end());
 	
-	//colliding = NULL;
-	
 	
 	for(int i = 0; i < 4; i++)
 	{
@@ -205,8 +195,11 @@ void tearApp::setup()
 	
 	last = getElapsedSeconds();
 	
-	cam = CameraOrtho(0, getWindowWidth(), getWindowHeight(), 0, 0, 1000);
+	camO = CameraOrtho(0, getWindowWidth(), getWindowHeight(), 0, 0, 1000);
+	camO.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
+	cam = CameraPersp( getWindowWidth(), getWindowHeight(), 100, 0.1, 10000 );
 	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
+	//cam.setWorldUp(Vec3f(.0f, -1.0f, .0f));
 	
 	setFrameRate(60.0f);
 	
@@ -218,19 +211,16 @@ void tearApp::setup()
 	gs->centroid = centroid;
 	
 	egen = new EnemyGenerator(gs, 1.0f, 18.0f);
-	
-//	if(b_firstrun) wiim->go();
+	partgen = new ParticleGen(centroid, .25f, 10.0f);
 	
 	TextLayout simple;
 	simple.setFont( Font( "Helvetica", 24 ) );
 	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
 	simple.addLine( "score: 0" );
 	scoreTexture = gl::Texture( simple.render( true, false ) );
-}
-
-void tearApp::foo()
-{
-	printf("foo");
+	
+	
+	oscSend("/cinder/osc/start", 1.0f);
 }
 
 void tearApp::mouseDown( MouseEvent event )
@@ -289,8 +279,19 @@ void tearApp::keyDown( KeyEvent event )
 	}
 }
 
+void tearApp::oscSend(string address, float value)
+{
+	osc::Message message;
+	message.addFloatArg(value);
+	message.setAddress(address);
+	message.setRemoteEndpoint(OSC_SEND_HOST, OSC_SEND_PORT);
+	sender.sendMessage(message);
+}
+
 void tearApp::oscUpdate()
 {
+	
+	
 	while (listener.hasWaitingMessages()) {
 		osc::Message message;
 		listener.getNextMessage(&message);
@@ -310,7 +311,7 @@ void tearApp::oscUpdate()
 				osc_x[num] = message.getArgAsFloat(0);
 				osc_y[num] = message.getArgAsFloat(1);
 				
-				osc_irvec[num] = *centroid + Vec2f( (osc_x[num] - .5f) * getWindowWidth(), -(osc_y[num] - .5f) * getWindowHeight());
+				osc_irvec[num] = *centroid + Vec2f( (osc_x[num] - .5f) * getWindowWidth() * zoom/330.0f, (osc_y[num] - .5f) * getWindowHeight() * zoom/330.0f);
 				
 				console() << num << ": " << osc_x[num] << " / " << osc_y[num] << endl;
 				
@@ -338,15 +339,24 @@ void tearApp::oscUpdate()
 				console() << "Exception reading argument as int" << std::endl;
 			}
 		}
+		
+		else if((addr == "/max/zoom" ) && message.getNumArgs() == 1)
+		{
+			try {
+				zoom = message.getArgAsFloat(0);
+				
+			} catch (...) {
+				console() << "Exception reading argument as float" << std::endl;
+			}
+		}
+		
 	}
 }
 
 void tearApp::update()
 {
-//	if(!ref->isPlaying())
-//		ref->play();
-	
 	oscUpdate();
+	oscSend("/cinder/osc/life", life);
 	
 	if(life <= .0f && !b_endgame)
 		endgame(-1);
@@ -421,12 +431,12 @@ void tearApp::update()
 		}
 	}
 	
-	// update enemy generator
-	egen->update(dt);
+	
 	
 	// collision detection and reaction between enemies and blob
 	colliding = egen->collideWithBlob();
 	
+	colliding_good = colliding_bad = false;
 	enableQ = enableGoodQ = enablePointQ = .0f;
 	if(colliding)
 	{
@@ -438,12 +448,14 @@ void tearApp::update()
 				score += .001;
 				life += 3 * dt;
 				enableGoodQ = .2f;
+				colliding_good = true;
 			}
 			else if((*it)->type == BAD) 
 			{
 				score = math<float>::max(score - .005, .0f);
 				life -= dt;
 				enableQ = .05f;
+				colliding_bad = true;
 			}
 		}
 	}
@@ -460,35 +472,10 @@ void tearApp::update()
 		}
 	}
 	
-	/*
-	// advance "history" of tugs per wiimote
-	for(int j = 0; j < 4; j++)
-	{
-		for(int i = 0; i < 499; i++)
-		{
-			wiitug[j][i] = wiitug[j][i+1];
-		}
-		
-		
-		wiitug[j][499] = wiim->a_state_pitch[j];
-		
-		if(tugctr[j] > .0f) tugctr[j] -= dt;
-		if(tugctr[j] < .0f) tugctr[j] = .0f;
-		
-		tugged[j] = hasTugged(j);
-		
-		// add tug force if a tug has been detected
-		if(tugged[j]) tug[j] += TUGSC * 3;
-		
-		
-		// ROLL
-//		spin[j] = 2*M_PI*(float)((int)(getElapsedSeconds() * 1000.0f) % 1000)/1000.0f;
-		spin[j] = .0f;
-		
-	}
-	 */
 	
-	// AI...
+	// apply tug & perform AI decisions...
+	// ---------------------------------------------------------------------------
+
 	for(int j = 0; j < 4; j++)
 	{
 		if(j > mode)
@@ -540,27 +527,19 @@ void tearApp::update()
 			
 			if(rand->nextInt(100) > 87) tug[j] += TUGSC * 0.5f;
 		}
-	//	else
-		//{
-			if(hasTugged(j)) tug[j] += TUGSC * 0.5f;
-		//}
+
+		// apply player tug
+		if(hasTugged(j)) tug[j] += TUGSC * 0.5f;
 
 	}
-	
-	TextLayout simple;
-	simple.setFont( helv );
-	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
-	stringstream ss;
-	ss << "score: ";
-	ss << ((int) score);
-	ss << " -- life: ";
-	ss << ((int) life);
-	simple.addLine( ss.str() );
-	scoreTexture = gl::Texture( simple.render( false, false ) );
+	// ---------------------------------------------------------------------------
 	
 	mFreqTargetQ = 200.0f;
 	mFreqTargetP = 400.0f;
 	mFreqTarget = 300.0f;
+	
+	egen->update(dt);
+	partgen->update(dt);
 }
 
 bool tearApp::hasTugged(int id)
@@ -576,30 +555,56 @@ void tearApp::draw()
 {
 	gl::enableAlphaBlending( false );
 	
+	glPushMatrix();
 	// set camera to center on centroid
-	cam.lookAt(Vec3f(centroid->x - getWindowWidth()/2, centroid->y - getWindowHeight()/2, 10.0f), Vec3f(centroid->x - getWindowWidth()/2, centroid->y - getWindowHeight()/2, .0f));
+	cam.lookAt(Vec3f(centroid->x, centroid->y, zoom), Vec3f(centroid->x, centroid->y, .0f));
 	gl::setMatrices(cam);
 	
-	//gl::clear( Color( 26.0f/255.0f, 33.0f/255.0f, 53.0f/255.0f ) ); 
-	gl::clear( Color( .3f, .3f, .3f ) ); 
+	gl::clear( Color( .1f, .1f, .1f ) ); 
 	
 	// draw the background grid, total -10000 to 10000, but clip everything outside the frame
+	// ---------------------------------------------------------------------------
+
 	for(int i = 0; i < 100; i++)
 		for(int j = 0; j < 100; j++)
 		{
 			if(centroid->distance(Vec2f(i*100-5000, j*100-5000)) > getWindowWidth() * 2) continue;
 			
 			glPushMatrix();
-			gl::translate(Vec2f(i * 100 - 5000, j * 100 - 5000));
-			gl::color(Color(.3f, .3f, .3f));
-			gl::drawLine(Vec2f(-5.0f, -5.0f), Vec2f(5.0f, 5.0f));
-			gl::drawLine(Vec2f(5.0f, -5.0f), Vec2f(-5.0f, 5.0f));
+			gl::translate(Vec3f(i * 100 - 5000, j * 100 - 5000, -300.0f));
+			gl::color(ColorA(.9f, .5f, .0f, .4f));
+			glLineWidth(1.0f);
+			glLineStipple(3, 0xAAAA);
+			glEnable(GL_LINE_STIPPLE);
+			gl::drawLine(Vec2f(-50.0f, 0.0f), Vec2f(50.0f, 0.0f));
+			gl::drawLine(Vec2f(.0f, -50.0f), Vec2f(0.0f, 50.0f));
+			glDisable(GL_LINE_STIPPLE);
 			glPopMatrix();
 		}
 	
+		for(int j = 0; j < 50; j++)
+		{
+			if(centroid->distance(Vec2f(j*200-5000, .0f)) > getWindowWidth() * 5) continue;
+			
+			glPushMatrix();
+			gl::translate(Vec3f(j * 200 - 5000, .0f, -2000.0f));
+			gl::color(ColorA(.2f, .2f, .2f, .2f));
+			gl::drawLine(Vec2f(.0f, -4500.0f), Vec2f(0.0f, 4500.0f));
+			glPopMatrix();
+		}
+	 
+	
+	glPushMatrix();
+	gl::translate(Vec3f(.0f, .0f, -50.0f));
+	partgen->draw();
+	glPopMatrix();
+	
+	// ---------------------------------------------------------------------------
+
+	
+	// draw blob lines
+	// ---------------------------------------------------------------------------
 	if(!(b_endgame && lastwinner == -2)){
-		// draw blob lines
-		
 		glLineWidth(3.0f);
 		if(sumdist > 250.0f)
 		{
@@ -611,9 +616,12 @@ void tearApp::draw()
 		gl::draw(*blob);
 		glDisable(GL_LINE_STIPPLE);
 		glLineWidth(1.0f);
+	// ---------------------------------------------------------------------------
+
 	
 	// draw inner area
-	
+	// ---------------------------------------------------------------------------
+
 	
 		gl::color(ColorA(1.0f - life/100.0f, .0f, life/100.0f, .5f));
 		
@@ -633,8 +641,12 @@ void tearApp::draw()
 		glEnd();
 		
 	}
+	// ---------------------------------------------------------------------------
+
 	
 	// draw corners
+	// ---------------------------------------------------------------------------
+
 	for(int i = 0; i < 4; i++)
 	{
 		Vec2f& pt = blob->getPoints()[i];
@@ -672,21 +684,27 @@ void tearApp::draw()
 		
 		glPopMatrix();
 	}
-	
-	glPushMatrix();
+	// ---------------------------------------------------------------------------
+
 	
 	// draw centroid
+	// ---------------------------------------------------------------------------
+
+	glPushMatrix();
 	gl::translate(*centroid);
 	
 	gl::color(Color(1.0f, .0f, .0f));
 	gl::drawSolidCircle(Vec2f(.0f, .0f), 5.0f, 32);
 	
 	glPopMatrix();
+	// ---------------------------------------------------------------------------
+
 	
 	// draw enemies
 	egen->draw();
 	
 	// draw collision indicators
+	//---------------------------------------------------------------------------
 	if(colliding){
 		vector<Enemy*>::iterator it;
 		for(it = colliding->begin(); it < colliding->end(); it++)
@@ -700,6 +718,7 @@ void tearApp::draw()
 			glPopMatrix();
 		}
 	}
+	
 	
 	if(collidingCorners)
 	{
@@ -717,8 +736,11 @@ void tearApp::draw()
 			glPopMatrix();
 		}
 	}
+	// ---------------------------------------------------------------------------
 	
-	// draw debug wiimote data feeds
+	// draw debug wiimote data feeds 
+	// ---------------------------------------------------------------------------
+
 	if(debug)
 	{
 		for(int k = 0; k < 4; k++)
@@ -734,33 +756,73 @@ void tearApp::draw()
 			
 		}
 	}
-	
-	// draw scores
-	glColor3f( 1.0f, 1.0f, 1.0f );
-	
-	
-	glPushMatrix();
-	
-	gl::translate(Vec2f(cam.getEyePoint().x + getWindowWidth() / 2.0f, cam.getEyePoint().y + 50.0f));
-	
-	gl::color(ColorA(1.0f - life/100.0f, .0f, life/100.0f, .9f));
-	gl::drawSolidRect(Rectf(-life*3.0f, .0f, life*3.0f, 10.0f));
-	
-	glPopMatrix();
-	
-	if(b_endgame)
-	{
-		gl::draw( endgameTexture, Vec2f( cam.getEyePoint().x + getWindowWidth()/2 - endgameTexture.getWidth()/2, cam.getEyePoint().y + getWindowHeight()/2 ) );
-	}
-	
-	// cursors
-	
+	// ---------------------------------------------------------------------------
+
+	// draw cursors
+	// ---------------------------------------------------------------------------
+
 	for(int i = 0; i < 4; i++)
 	{
 		gl::color(playerColor[i]);
 			
 		gl::drawStrokedCircle(osc_irvec[i], 10.0f, 16);
 	}
+	// ---------------------------------------------------------------------------
+	glPopMatrix();
+
+	// HUD / ORTHO SECTION
+	//// -------------------------------------------------------------------------
+	
+	glPushMatrix();
+	
+	camO.lookAt(Vec3f(centroid->x - getWindowWidth()/2, centroid->y-getWindowHeight()/2, 10.0f), Vec3f(centroid->x- getWindowWidth()/2, centroid->y-getWindowHeight()/2, .0f));
+	gl::setMatrices(camO);
+	
+	// draw health bar
+	// ---------------------------------------------------------------------------
+	
+	glColor3f( 1.0f, 1.0f, 1.0f );
+	
+	
+	glPushMatrix();
+	
+	gl::translate(Vec3f(camO.getEyePoint().x + getWindowWidth()/2, camO.getEyePoint().y+50.0f, .0f));
+	
+	gl::color(ColorA(1.0f - life/100.0f, .0f, life/100.0f, .9f));
+	gl::drawSolidRect(Rectf(-life*3.0f, .0f, life*3.0f, 10.0f));
+	
+	if(colliding_bad)
+	{
+		gl::color(ColorA(1.0f, .0f, .0f, math<float>::sin(getElapsedSeconds() * 10.0f)));
+		gl::scale(Vec3f(1.0f, 1.2f, 1.0f));
+		gl::drawSolidRect(Rectf(-life*3.0f, .0f, life*3.0f, 10.0f));
+	}
+	
+	if(colliding_good)
+	{
+		gl::color(ColorA(.6f, .6f, 1.0f, math<float>::sin(getElapsedSeconds() * 10.0f)));
+		gl::scale(Vec3f(1.0f, 1.2f, 1.0f));
+		gl::drawSolidRect(Rectf(-life*3.0f, .0f, life*3.0f, 10.0f));
+	}
+	
+	glPopMatrix();
+	// ---------------------------------------------------------------------------
+	
+	
+	
+	// draw endgame score text
+	// ---------------------------------------------------------------------------
+
+	if(b_endgame)
+	{
+		gl::color(Color(1.0f, 1.0f, 1.0f));
+		gl::draw( endgameTexture, Vec2f( camO.getEyePoint().x + getWindowWidth()/2 - endgameTexture.getWidth()/2, camO.getEyePoint().y + getWindowHeight()/2 ) );
+	}
+	// ---------------------------------------------------------------------------
+
+	glPopMatrix();
+	//// -------------------------------------------------------------------------
+
 	
 }
 
@@ -772,36 +834,34 @@ void tearApp::endgame(int winner)
 	
 	TextLayout simple;
 	simple.setFont( helv );
+	simple.clear(ColorA(.0f, .0f, .0f, .3f));
 	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
 	stringstream ss;
 	
 	if(winner >= 0){
 		ss << "game over - player ";
 		ss << (winner+1);
-		ss << " won. collective score: ";
-		ss << ((int) score);
+		ss << " won";
 	} else if(winner == -1){
-		ss << "game over - you died. collective score: ";
-		ss << ((int) score);
+		ss << "game over - you died";
 	} else if(winner == -2){
-		ss << "game over - you were torn apart. collective score: ";
-		ss << ((int) score);
+		ss << "game over - you were torn apart";
 	}
 	
 	simple.addLine( ss.str() );
-	endgameTexture = gl::Texture( simple.render( false, false ) );
+	endgameTexture = gl::Texture( simple.render( true, false ) );
 	
 }
 
 void tearApp::shutdown()
 {
-	delete gs;
+	oscSend("/cinder/osc/start", .0f);
+	delete rand;
 	delete egen;
-	delete wiim;
+	delete partgen;
+	delete gs;
 	delete centroid;
 	delete blob;
-	
-	
 }
 
 void tearApp::squareWave( uint64_t inSampleOffset, uint32_t ioSampleCount, audio::Buffer32f *ioBuffer ) 

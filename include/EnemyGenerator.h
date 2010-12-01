@@ -7,6 +7,7 @@
  *
  */
 
+//#include "common.h"
 #include "GameState.h"
 #include <vector>
 #include "cinder/Rand.h"
@@ -18,7 +19,8 @@ using namespace std;
 enum enemy_type {
 	GOOD,
 	BAD,
-	UGLY
+	UGLY,
+	DECO
 };
 
 
