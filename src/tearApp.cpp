@@ -156,10 +156,10 @@ void tearApp::setup()
 	
 	colliding_good = colliding_bad = false;
 	
-	playerColor[0] = Color(1.0f, .0f, 1.0f);
+	playerColor[3] = Color(1.0f, .0f, 1.0f);
 	playerColor[1] = Color(1.0f, .1f, .02f);
 	playerColor[2] = Color(.1f, 1.0f, .02f);
-	playerColor[3] = Color(.02f, .8f, 1.0f);
+	playerColor[0] = Color(.02f, .8f, 1.0f);
 	
 	helv = Font("Helvetica", 24);
 	
@@ -470,6 +470,7 @@ void tearApp::update()
 				life += lifeIncRate * dt;
 				enableGoodQ = .2f;
 				colliding_good = true;
+				oscSend("/cinder/osc/health", 1.0f);
 			}
 			else if((*it)->type == BAD) 
 			{
@@ -477,6 +478,7 @@ void tearApp::update()
 				life -= lifeDecRate * dt;
 				enableQ = .05f;
 				colliding_bad = true;
+				oscSend("/cinder/osc/hurt", 1.0f);
 			}
 		}
 	}
