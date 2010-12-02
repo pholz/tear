@@ -10,6 +10,7 @@
 #define OSC_SEND_HOST "localhost"
 #define OSC_SEND_PORT 5000
 #define OSC_RECEIVE_PORT 3000
+#define NUMPLAYERS 3
 
 using namespace ci;
 using namespace ci::app;
@@ -26,8 +27,8 @@ private:
 	vector<Vec2f> dirs;
 	vector<Vec2f> origdirs;
 	Vec2f *centroid;
-	float tug[4];
-	float spin[4];
+	float tug[NUMPLAYERS];
+	float spin[NUMPLAYERS];
 	float last;
 	CameraOrtho camO;
 	CameraPersp cam;
@@ -40,7 +41,7 @@ private:
 	bool colliding_good, colliding_bad;
 	
 	float score, life;
-	float iscore[4];
+	float iscore[NUMPLAYERS];
 	float sumdist;
 	
 	bool b_endgame, b_firstrun;
@@ -53,9 +54,7 @@ private:
 	
 	gl::Texture scoreTexture, endgameTexture;
 	
-	float wiitug[4][500];
-	bool tugged[4];
-	float tugctr[4];
+	//bool tugged[4];
 	
 	shared_ptr< audio::Callback<tearApp, float> > cb1, cb2, cb3;
 	
@@ -68,9 +67,9 @@ private:
 	
 	osc::Listener listener;
 	osc::Sender sender;
-	float osc_x[4], osc_y[4];
-	Vec2f osc_irvec[4];
-	bool osc_btn_a[4];
+	float osc_x[NUMPLAYERS], osc_y[NUMPLAYERS];
+	Vec2f osc_irvec[NUMPLAYERS];
+	bool osc_btn_a[NUMPLAYERS];
 	
 	Color playerColor[4];
 	
@@ -80,6 +79,7 @@ private:
 	
 	// tune
 	float zoom;
+	float lifeDecAlwaysRate, lifeDecRate, lifeIncRate;
 	
 public:
 	
@@ -149,6 +149,9 @@ void tearApp::setup()
 	mode = 0;
 	
 	zoom = 350.0f;
+	lifeDecAlwaysRate = 1.0f;
+	lifeDecRate = 1.0f;
+	lifeIncRate = 3.0f;
 	
 	colliding_good = colliding_bad = false;
 	
@@ -164,23 +167,24 @@ void tearApp::setup()
 	blob->push_back(Vec2f(20.0f, 50.0f));
 	blob->push_back(Vec2f(40.0f, 50.0f));
 	blob->push_back(Vec2f(40.0f, 100.0f));
-	blob->push_back(Vec2f(20.0f, 100.0f));
+	if(NUMPLAYERS > 3)
+		blob->push_back(Vec2f(20.0f, 100.0f));
 	
 	origdirs = vector<Vec2f>();
 	origdirs.push_back(Vec2f(-1.0f, -1.0f));
 	origdirs.push_back(Vec2f(1.0f, -1.0f));
 	origdirs.push_back(Vec2f(1.0f, 1.0f));
-	origdirs.push_back(Vec2f(-1.0f, 1.0f));
+	if(NUMPLAYERS > 3)
+		origdirs.push_back(Vec2f(-1.0f, 1.0f));
 	
 	dirs = vector<Vec2f>();
 	dirs.assign(origdirs.begin(), origdirs.end());
 	
 	
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < NUMPLAYERS; i++)
 	{
 		tug[i] = .0f;
-		tugctr[i] = .0f;
-		tugged[i] = false;
+		//tugged[i] = false;
 		iscore[i] = .0f;
 		spin[i] = .0f;
 		osc_x[i] = .0f;
@@ -188,10 +192,6 @@ void tearApp::setup()
 		osc_btn_a[i] = false;
 		osc_irvec[i] = Vec2f(0, 0);
 	}
-	
-	for(int j = 0; j < 4; j++)
-		for(int i = 0; i < 500; i++)
-			wiitug[j][i] = .0f;
 	
 	last = getElapsedSeconds();
 	
@@ -241,28 +241,8 @@ void tearApp::keyDown( KeyEvent event )
 		b_endgame = false;
 		this->setup();
 	}
-	
-	if( event.getChar() == 'q' ){
-		tug[0] += TUGSC;
-	}
-	if( event.getChar() == 'p' ){
-		tug[1] += TUGSC;
-	}
-	if( event.getChar() == 'm' ){
-		tug[2] += TUGSC;
-	}
-	if( event.getChar() == 'c' ){
-		tug[3] += TUGSC;
-	}
 	if( event.getChar() == 'd' ){
 		debug = !debug;
-	}
-	
-	if( event.getChar() == 'x' ){
-		spin[3] += 3;
-	}
-	if( event.getChar() == 'v' ){
-		spin[3] -= 3;
 	}
 	if( event.getChar() == '1' ){
 		mode = 0;
@@ -308,6 +288,8 @@ void tearApp::oscUpdate()
 				
 				int num = (int) addr[5] - (int) '0' - 1;
 				
+				if(num > NUMPLAYERS) continue;
+				
 				osc_x[num] = message.getArgAsFloat(0);
 				osc_y[num] = message.getArgAsFloat(1);
 				
@@ -328,7 +310,10 @@ void tearApp::oscUpdate()
 			try {
 				
 				
+				
 				int num = (int) addr[5] - (int) '0' - 1;
+				
+				if(num > NUMPLAYERS) continue;
 				
 				if(message.getArgAsInt32(0)) osc_btn_a[num] = true;
 				else						 osc_btn_a[num] = false;
@@ -349,6 +334,33 @@ void tearApp::oscUpdate()
 				console() << "Exception reading argument as float" << std::endl;
 			}
 		}
+		else if((addr == "/max/lifeDecRate" ) && message.getNumArgs() == 1)
+		{
+			try {
+				lifeDecRate = message.getArgAsFloat(0);
+				
+			} catch (...) {
+				console() << "Exception reading argument as float" << std::endl;
+			}
+		}
+		else if((addr == "/max/lifeDecAlwaysRate" ) && message.getNumArgs() == 1)
+		{
+			try {
+				lifeDecAlwaysRate = message.getArgAsFloat(0);
+				
+			} catch (...) {
+				console() << "Exception reading argument as float" << std::endl;
+			}
+		}
+		else if((addr == "/max/lifeIncRate" ) && message.getNumArgs() == 1)
+		{
+			try {
+				lifeIncRate = message.getArgAsFloat(0);
+				
+			} catch (...) {
+				console() << "Exception reading argument as float" << std::endl;
+			}
+		}
 		
 	}
 }
@@ -361,7 +373,7 @@ void tearApp::update()
 	if(life <= .0f && !b_endgame)
 		endgame(-1);
 	
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < NUMPLAYERS; i++)
 	{
 		if(iscore[i] >= 100.0f && !b_endgame)
 			endgame(i);
@@ -372,11 +384,11 @@ void tearApp::update()
 	float dt = now - last;
 	last = now;
 	
-	life -= dt;
+	life -= dt * lifeDecAlwaysRate;
 	
 	//dirs.clear();
 	// move corners according to tug (indirectly and directly)
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < NUMPLAYERS; i++)
 	{
 		dirs[i] = (osc_irvec[i] - blob->getPoints()[i]).normalized();
 		
@@ -384,7 +396,7 @@ void tearApp::update()
 		if(blob->getPoints()[i].distance(osc_irvec[i]) > 0.0f)
 			blob->getPoints()[i] += dirs[i] * tug[i] * math<float>::min(blob->getPoints()[i].distance(osc_irvec[i]), 50.0f) / 50.0f;
 
-		for(int j = 0; j < 4; j++)
+		for(int j = 0; j < NUMPLAYERS; j++)
 		{
 			if(j == i) continue;
 			blob->getPoints()[i] += dirs[j] * tug[j] * 0.3f;	
@@ -395,24 +407,24 @@ void tearApp::update()
 	centroid->y = .0f;
 	
 	// calc entroid
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < NUMPLAYERS; i++)
 	{
 		*centroid += blob->getPoints()[i];
 	}
 	
-	*centroid /= 4.0f;
+	*centroid /= (float) NUMPLAYERS;
 	
 	sumdist = .0f;
 	
 	// get sum of distances of corner points to centroid
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < NUMPLAYERS; i++)
 	{
 		sumdist += blob->getPoints()[i].distance(*centroid);
 	}
 	
 	if(sumdist > 600.0f)
 	{
-		for(int i = 0; i < 4; i++)
+		for(int i = 0; i < NUMPLAYERS; i++)
 		{
 			tug[i] += 1.0f;
 		}
@@ -420,7 +432,7 @@ void tearApp::update()
 	}
 	
 	// add "elastic" force to corners, proportional to "tension" in the system
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < NUMPLAYERS; i++)
 	{
 		Vec2f& pt = blob->getPoints()[i];
 		
@@ -446,14 +458,14 @@ void tearApp::update()
 			if((*it)->type == GOOD) 
 			{
 				score += .001;
-				life += 3 * dt;
+				life += lifeIncRate * dt;
 				enableGoodQ = .2f;
 				colliding_good = true;
 			}
 			else if((*it)->type == BAD) 
 			{
 				score = math<float>::max(score - .005, .0f);
-				life -= dt;
+				life -= lifeDecRate * dt;
 				enableQ = .05f;
 				colliding_bad = true;
 			}
@@ -476,7 +488,7 @@ void tearApp::update()
 	// apply tug & perform AI decisions...
 	// ---------------------------------------------------------------------------
 
-	for(int j = 0; j < 4; j++)
+	for(int j = 0; j < NUMPLAYERS; j++)
 	{
 		if(j > mode)
 		{
@@ -629,7 +641,7 @@ void tearApp::draw()
 		
 		gl::vertex(*centroid);
 		
-		for(int i = 0; i < 4; i++)
+		for(int i = 0; i < NUMPLAYERS; i++)
 		{
 			Vec2f& pt = blob->getPoints()[i];
 			
@@ -647,7 +659,7 @@ void tearApp::draw()
 	// draw corners
 	// ---------------------------------------------------------------------------
 
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < NUMPLAYERS; i++)
 	{
 		Vec2f& pt = blob->getPoints()[i];
 		glPushMatrix();
@@ -737,31 +749,11 @@ void tearApp::draw()
 		}
 	}
 	// ---------------------------------------------------------------------------
-	
-	// draw debug wiimote data feeds 
-	// ---------------------------------------------------------------------------
-
-	if(debug)
-	{
-		for(int k = 0; k < 4; k++)
-		{
-			glPushMatrix();
-			gl::translate(Vec2f(cam.getEyePoint().x, cam.getEyePoint().y+150+k*150));
-			gl::color(Color(.0f, 1.0f/(float(k)+1), .21f * (float(k)+1)));
-			glBegin(GL_LINE_STRIP);
-			for(int i = 0; i < 500; i++)
-				glVertex2f(i, -wiitug[k][i]);
-			glEnd();
-			glPopMatrix();
-			
-		}
-	}
-	// ---------------------------------------------------------------------------
 
 	// draw cursors
 	// ---------------------------------------------------------------------------
 
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < NUMPLAYERS; i++)
 	{
 		gl::color(playerColor[i]);
 			
