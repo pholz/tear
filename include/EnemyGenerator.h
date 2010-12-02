@@ -8,9 +8,11 @@
  */
 
 //#include "common.h"
+
 #include "GameState.h"
 #include <vector>
 #include "cinder/Rand.h"
+#include "cinder/gl/Vbo.h"
 
 using namespace ci;
 using namespace std;
@@ -35,6 +37,9 @@ public:
 	Rand* rand;
 	float r0, r1, r2, speed;
 	
+	static TriMesh*			mMeshBad;
+	static gl::VboMesh*		mVBOBad;
+	
 	Enemy(GameState* gs, float lt, Rand* r);
 	~Enemy();
 	
@@ -46,6 +51,7 @@ typedef struct
 {
 	int corner;
 	Enemy* enemy;
+	vector<Enemy*>::iterator collide_it;
 } cornerCollision;
 
 class EnemyGenerator {

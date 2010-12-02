@@ -35,6 +35,8 @@
 		6638B99F126E3B4300C1080A /* wiic.c in Sources */ = {isa = PBXBuildFile; fileRef = 6638B991126E3B4300C1080A /* wiic.c */; };
 		664ECD4012A5C727008685EC /* Particle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 664ECD3E12A5C726008685EC /* Particle.cpp */; };
 		664ECD4112A5C727008685EC /* ParticleGen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 664ECD3F12A5C727008685EC /* ParticleGen.cpp */; };
+		6664150D12A8129C0092554B /* cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = 6664150C12A8129C0092554B /* cube.obj */; };
+		6664155F12A819940092554B /* spikeball.obj in Resources */ = {isa = PBXBuildFile; fileRef = 6664155E12A819940092554B /* spikeball.obj */; };
 		66A648941270C58B00A9FA34 /* EnemyGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */; };
 		66F4627F127A236C00ED36ED /* s_bg.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627B127A236C00ED36ED /* s_bg.wav */; };
 		66F46280127A236C00ED36ED /* s_feed.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627C127A236C00ED36ED /* s_feed.wav */; };
@@ -108,6 +110,8 @@
 		664ECD3E12A5C726008685EC /* Particle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Particle.cpp; sourceTree = "<group>"; };
 		664ECD3F12A5C727008685EC /* ParticleGen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleGen.cpp; sourceTree = "<group>"; };
 		664ECD5112A5CA5E008685EC /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		6664150C12A8129C0092554B /* cube.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cube.obj; path = /Users/holz/code/cinder_0.8.2_mac/apps/tear/resources/cube.obj; sourceTree = "<absolute>"; };
+		6664155E12A819940092554B /* spikeball.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = spikeball.obj; path = /Users/holz/code/cinder_0.8.2_mac/apps/tear/resources/spikeball.obj; sourceTree = "<absolute>"; };
 		6697A7CF126BCDC00091953B /* EnemyGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnemyGenerator.h; path = ../include/EnemyGenerator.h; sourceTree = "<group>"; };
 		6697A7E6126BFC670091953B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../include/util.h; sourceTree = "<group>"; };
 		66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EnemyGenerator.cpp; path = ../src/EnemyGenerator.cpp; sourceTree = SOURCE_ROOT; };
@@ -232,6 +236,8 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				6664155E12A819940092554B /* spikeball.obj */,
+				6664150C12A8129C0092554B /* cube.obj */,
 				66F462E5127A2A9100ED36ED /* s4_bg.wav */,
 				66F462BC127A275E00ED36ED /* booyah.wav */,
 				66F4627B127A236C00ED36ED /* s_bg.wav */,
@@ -358,6 +364,8 @@
 				66F46282127A236C00ED36ED /* s_uglyup.wav in Resources */,
 				66F462BD127A275E00ED36ED /* booyah.wav in Resources */,
 				66F462E6127A2A9100ED36ED /* s4_bg.wav in Resources */,
+				6664150D12A8129C0092554B /* cube.obj in Resources */,
+				6664155F12A819940092554B /* spikeball.obj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

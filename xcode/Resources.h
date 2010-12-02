@@ -14,3 +14,4 @@
 #define RES_FEED	CINDER_RESOURCE( ../resources/, s_feed.wav, 129, WAV )
 #define RES_BG		CINDER_RESOURCE( ../resources/, s4_bg.wav, 130, WAV )
 #define RES_HURT	CINDER_RESOURCE( ../resources/, s_hurt.wav, 131, WAV )
+#define RES_SPIKEBALL_OBJ		CINDER_RESOURCE( ../resources/, spikeball.obj, 132, DATA )

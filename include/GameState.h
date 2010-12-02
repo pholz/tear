@@ -10,7 +10,10 @@
 
 using namespace ci;
 
+class tearApp;
+
 typedef struct {
 	PolyLine<Vec2f>* blob;
 	Vec2f* centroid;
+	
 } GameState;

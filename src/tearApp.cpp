@@ -6,6 +6,7 @@
 #include <sstream>
 #include "OscListener.h"
 #include "OscSender.h"
+#include "cinder/ObjLoader.h"
 
 #define OSC_SEND_HOST "localhost"
 #define OSC_SEND_PORT 5000
@@ -197,7 +198,7 @@ void tearApp::setup()
 	
 	camO = CameraOrtho(0, getWindowWidth(), getWindowHeight(), 0, 0, 1000);
 	camO.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
-	cam = CameraPersp( getWindowWidth(), getWindowHeight(), 100, 0.1, 10000 );
+	cam = CameraPersp( getWindowWidth(), getWindowHeight(), 50, 0.1, 10000 );
 	cam.lookAt(Vec3f(getWindowWidth()/2, getWindowHeight()/2, .0f));
 	//cam.setWorldUp(Vec3f(.0f, -1.0f, .0f));
 	
@@ -210,7 +211,7 @@ void tearApp::setup()
 	gs->blob = blob;
 	gs->centroid = centroid;
 	
-	egen = new EnemyGenerator(gs, 1.0f, 18.0f);
+	egen = new EnemyGenerator(gs, .5f, 15.0f);
 	partgen = new ParticleGen(centroid, .25f, 10.0f);
 	
 	TextLayout simple;
@@ -218,6 +219,14 @@ void tearApp::setup()
 	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
 	simple.addLine( "score: 0" );
 	scoreTexture = gl::Texture( simple.render( true, false ) );
+	
+	if(!Enemy::mVBOBad)
+	{
+		ObjLoader loader( loadResource( RES_SPIKEBALL_OBJ )->createStream() );
+		Enemy::mMeshBad = new TriMesh();
+		loader.load( Enemy::mMeshBad );
+		Enemy::mVBOBad = new gl::VboMesh( *Enemy::mMeshBad );
+	}
 	
 	
 	oscSend("/cinder/osc/start", 1.0f);
@@ -293,7 +302,7 @@ void tearApp::oscUpdate()
 				osc_x[num] = message.getArgAsFloat(0);
 				osc_y[num] = message.getArgAsFloat(1);
 				
-				osc_irvec[num] = *centroid + Vec2f( (osc_x[num] - .5f) * getWindowWidth() * zoom/330.0f, (osc_y[num] - .5f) * getWindowHeight() * zoom/330.0f);
+				osc_irvec[num] = *centroid + Vec2f( (osc_x[num] - .5f) * getWindowWidth() * (zoom/330.0f)/2.0f, (osc_y[num] - .5f) * getWindowHeight() * (zoom/330.0f)/2.0f);
 				
 				console() << num << ": " << osc_x[num] << " / " << osc_y[num] << endl;
 				
@@ -479,8 +488,16 @@ void tearApp::update()
 		vector<cornerCollision>::iterator it;
 		for(it = collidingCorners->begin(); it < collidingCorners->end(); it++)
 		{
-			iscore[it->corner] = math<float>::min(iscore[it->corner] + dt * 4.0f, 100.0f);
-			enablePointQ = .2f;
+			iscore[it->corner] = math<float>::min(iscore[it->corner] + 10.0f, 100.0f);
+			try{
+				it->enemy->expired = it->enemy->lifetime;
+				//egen->enemies.erase(it->collide_it);
+			} catch (...) {
+				console() << "error erasing" << endl;
+			}
+			
+			oscSend("/cinder/osc/collect", 1.0f);
+			//enablePointQ = .2f;
 		}
 	}
 	
@@ -571,6 +588,16 @@ void tearApp::draw()
 	// set camera to center on centroid
 	cam.lookAt(Vec3f(centroid->x, centroid->y, zoom), Vec3f(centroid->x, centroid->y, .0f));
 	gl::setMatrices(cam);
+	
+	//glEnable( GL_LIGHTING );
+//	glEnable( GL_LIGHT0 );
+//	glEnable( GL_COLOR_MATERIAL );
+//
+//	GLfloat light_position[] = { 0, 0, 1.0f, .0f };
+//	glLightfv( GL_LIGHT0, GL_POSITION, light_position );
+	
+	
+	//glShadeModel(GL_FLAT);
 	
 	gl::clear( Color( .1f, .1f, .1f ) ); 
 	
@@ -672,11 +699,11 @@ void tearApp::draw()
 		gl::color(ColorA(playerColor[i], .5f));
 		gl::drawVector(Vec3f(.0f, .0f, .0f), Vec3f(osc_irvec[i].x, osc_irvec[i].y, .0f) - Vec3f(pt.x, pt.y, .0f));
 		gl::color(playerColor[i]);
-		gl::drawSolidCircle(Vec2f(.0f, .0f), 4.8f, 32);
+		gl::drawSolidCircle(Vec2f(.0f, .0f), 5.0f + iscore[i] / 10.0f, 32);
 		
 		
 		
-		
+		/*
 		float step = 2 * M_PI / 10.0f;
 		float maxscore = 100.0f;
 		for(float rad = .0f; rad < 2*M_PI*iscore[i]/maxscore; rad += step)
@@ -690,7 +717,7 @@ void tearApp::draw()
 			gl::drawSolidCircle(Vec2f(.0f, .0f), 3.0f, 16);
 			glPopMatrix();
 		}
-		
+		*/
 		
 		
 		
