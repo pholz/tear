@@ -14,6 +14,8 @@
 #include "cinder/Rand.h"
 #include "cinder/gl/Vbo.h"
 
+
+
 using namespace ci;
 using namespace std;
 //using namespace boost;
@@ -22,7 +24,9 @@ enum enemy_type {
 	GOOD,
 	BAD,
 	UGLY,
-	DECO
+	DECO,
+	COLORED,
+	SPECIAL
 };
 
 
@@ -36,6 +40,7 @@ public:
 	enemy_type type;
 	Rand* rand;
 	float r0, r1, r2, speed;
+	int special_type;
 	
 	static TriMesh*			mMeshBad;
 	static gl::VboMesh*		mVBOBad;

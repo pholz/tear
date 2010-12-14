@@ -110,6 +110,7 @@
 		664ECD3E12A5C726008685EC /* Particle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Particle.cpp; sourceTree = "<group>"; };
 		664ECD3F12A5C727008685EC /* ParticleGen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ParticleGen.cpp; sourceTree = "<group>"; };
 		664ECD5112A5CA5E008685EC /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		6654986412B6A0C50072B678 /* defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = defs.h; sourceTree = "<group>"; };
 		6664150C12A8129C0092554B /* cube.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cube.obj; path = /Users/holz/code/cinder_0.8.2_mac/apps/tear/resources/cube.obj; sourceTree = "<absolute>"; };
 		6664155E12A819940092554B /* spikeball.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = spikeball.obj; path = /Users/holz/code/cinder_0.8.2_mac/apps/tear/resources/spikeball.obj; sourceTree = "<absolute>"; };
 		6697A7CF126BCDC00091953B /* EnemyGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnemyGenerator.h; path = ../include/EnemyGenerator.h; sourceTree = "<group>"; };
@@ -229,6 +230,7 @@
 				32CA4F630368D1EE00C91783 /* tear_Prefix.pch */,
 				66F46277127A22CF00ED36ED /* Resources.h */,
 				664ECD5112A5CA5E008685EC /* common.h */,
+				6654986412B6A0C50072B678 /* defs.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
