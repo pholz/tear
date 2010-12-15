@@ -7,6 +7,7 @@
 #include "OscListener.h"
 #include "OscSender.h"
 #include "cinder/ObjLoader.h"
+#include "cinder/ImageIo.h"
 #include "defs.h"
 
 #define OSC_SEND_HOST "localhost"
@@ -16,6 +17,7 @@
 #define END_DEATH -1
 #define END_TEAR -2
 #define TEARTIME 5.0f
+#define STARTUPTIME 4.0f
 
 #define COLOR_P0 Color(.02f, .8f, 1.0f);
 #define COLOR_P1 Color(1.0f, .1f, .02f);
@@ -52,6 +54,7 @@ private:
 	boost::shared_ptr<vector<Enemy*> > colliding;
 	boost::shared_ptr<vector<cornerCollision> > collidingCorners;
 	bool colliding_good, colliding_bad;
+	bool FLAG_STARTUP;
 	
 	float score, life;
 	float iscore[NUMPLAYERS];
@@ -61,14 +64,14 @@ private:
 	
 	bool b_endgame, b_firstrun;
 	int lastwinner;
-	float tearTimer;
+	float tearTimer, noPauseTimer, startupTimer;
 	
 	Font helv48, helv24;
 	
 	audio::SourceRef au_uglyup, au_hurt, au_bg, au_feed;
 	audio::TrackRef ref;
 	
-	gl::Texture scoreTexture, endgameTexture;
+	gl::Texture scoreTexture, endgameTexture, pauseTexture, startupTexture;
 	
 	//bool tugged[4];
 	
@@ -78,6 +81,9 @@ private:
 	Vec2f osc_irvec[NUMPLAYERS];
 	bool osc_btn_a[NUMPLAYERS];
 	bool osc_btn_b[NUMPLAYERS];
+	bool osc_btn_1[NUMPLAYERS];
+	int player_caused_pause;
+	bool pause_btn_released;
 	
 	Color playerColor[4];
 	
@@ -109,8 +115,8 @@ public:
 
 void tearApp::prepareSettings(Settings* settings)
 {
-	settings->setWindowSize(1024, 768);
-//	settings->setFullScreen(true);
+//	settings->setWindowSize(1280, 1024);
+	settings->setFullScreen(true);
 	b_firstrun = true;
 	lastwinner = -1;
 	
@@ -125,12 +131,16 @@ void tearApp::setup()
 	
 	rand = new Rand();
 	
+	FLAG_STARTUP = true;
+	
+	startupTimer = .0f;
 	b_endgame = false;
 	debug = false;
 	score = .0f;
 	life = 100.0f;
 	mode = 2;
 	tearTimer = .0f;
+	noPauseTimer = .0f;
 	
 	zoom = 350.0f;
 	lifeDecAlwaysRate = 1.0f;
@@ -176,8 +186,11 @@ void tearApp::setup()
 		osc_y[i] = .0f;
 		osc_btn_a[i] = false;
 		osc_btn_b[i] = false;
+		osc_btn_1[i] = false;
 		osc_irvec[i] = Vec2f(0, 0);
 	}
+	player_caused_pause = 0;
+	pause_btn_released = false;
 	
 	last = getElapsedSeconds();
 	
@@ -205,6 +218,16 @@ void tearApp::setup()
 	simple.setColor( Color( 1.0f, 1.0f, 1.0f ) );
 	simple.addLine( "score: 0" );
 	scoreTexture = gl::Texture( simple.render( true, false ) );
+	
+	TextLayout startup;
+	startup.setFont( Font( "Helvetica Bold", 72 ) );
+	startup.setColor( Color( 1.0f, 1.0f, 1.0f ) );
+	startup.addCenteredLine( "tear" );
+	startup.setFont( Font( "Helvetica", 24 ) );
+	startup.addCenteredLine( "[press 1 for help/pause]" );
+	startupTexture = gl::Texture( startup.render( true, false ) );
+	
+	pauseTexture = gl::Texture(Surface(loadImage(loadResource("help.png"))));
 	
 	if(!Enemy::mVBOBad)
 	{
@@ -347,6 +370,36 @@ void tearApp::oscUpdate()
 			}
 		}
 		
+		else if((addr == "/wii/1/button/1" ||
+				 addr == "/wii/2/button/1" ||
+				 addr == "/wii/3/button/1" ||
+				 addr == "/wii/4/button/1" ) && message.getNumArgs() == 1)
+		{
+			
+			try {
+				
+				
+				
+				int num = (int) addr[5] - (int) '0' - 1;
+				
+				if(num > NUMPLAYERS) continue;
+				
+				if(message.getArgAsInt32(0)) 
+				{
+					osc_btn_1[num] = true;
+					player_caused_pause = num;
+					
+				}
+				else						 
+					osc_btn_1[num] = false;
+				
+				console() << num << ": 1 " << (osc_btn_1[num] ? "on" : "off") << endl;
+				
+			} catch (...) {
+				console() << "Exception reading argument as int" << std::endl;
+			}
+		}
+		
 		else if((addr == "/max/zoom" ) && message.getNumArgs() == 1)
 		{
 			try {
@@ -429,6 +482,11 @@ void tearApp::update()
 		// ---------------------------------------------------------------------------
 		case RUNNING:
 		// ---------------------------------------------------------------------------
+			if(noPauseTimer > 0) noPauseTimer -= dt;
+			if(noPauseTimer < 0) noPauseTimer = 0;
+			
+			if(startupTimer < STARTUPTIME)	startupTimer += dt;
+			else if(FLAG_STARTUP)			FLAG_STARTUP = false;
 			
 			// handle life & score updates
 			oscSend("/cinder/osc/life", life);
@@ -520,6 +578,25 @@ void tearApp::update()
 			partgen->update(dt);
 			// ---------------------------------------------------------------------------
 
+			// check for pause requested
+			// ---------------------------------------------------------------------------
+
+			found = false;
+			for(int i = 0; i < NUMPLAYERS; i++)
+			{
+				if(osc_btn_1[i])
+				{
+					found = true;
+				}
+			}
+			
+			if(found && !noPauseTimer) 
+			{
+				state = PAUSED;
+				pause_btn_released = false;
+			}
+			// ---------------------------------------------------------------------------
+
 			
 			break;
 			
@@ -569,6 +646,33 @@ void tearApp::update()
 		// ---------------------------------------------------------------------------
 		case PAUSED:
 		// ---------------------------------------------------------------------------
+			
+			FLAG_STARTUP = false;
+			
+			// check for unpause requested
+			// ---------------------------------------------------------------------------
+
+			if(osc_btn_1[player_caused_pause] == 0)
+				pause_btn_released = true;
+			
+			found = false;
+			for(int i = 0; i < NUMPLAYERS; i++)
+			{
+				if(osc_btn_1[i] && pause_btn_released)
+				{
+					found = true;
+				}
+			}
+			
+			if(found) 
+			{
+				state = RUNNING;
+				noPauseTimer = .4f;
+				
+			}
+			// ---------------------------------------------------------------------------
+
+			
 			break;
 	}
 	
@@ -863,7 +967,7 @@ void tearApp::draw()
 	// ---------------------------------------------------------------------------
 	
 	
-	// endgame messages
+	// state/flag overlays
 	// ---------------------------------------------------------------------------
 
 	switch(state)
@@ -877,7 +981,23 @@ void tearApp::draw()
 			
 			break;
 			
+		case PAUSED:
+			
+			gl::color(ColorA(.0f, .0f, .0f, .5f));
+			gl::drawSolidRect(Rectf(camO.getEyePoint().x, camO.getEyePoint().y, camO.getEyePoint().x + getWindowWidth(), camO.getEyePoint().y + getWindowHeight()));
+			gl::color(ColorA(1.0f, 1.0f, 1.0f, .8f));
+			gl::draw( pauseTexture, Vec2f( camO.getEyePoint().x + getWindowWidth()/2 - pauseTexture.getWidth()/2, camO.getEyePoint().y + getWindowHeight()/2 - pauseTexture.getHeight()/2 ) );
+			
+			break;
 	}
+	
+	if(FLAG_STARTUP && state == RUNNING)
+	{
+		gl::color(ColorA(1.0f, 1.0f, 1.0f, startupTimer > 3.0f ? (STARTUPTIME - startupTimer) / (STARTUPTIME - 3.0f) : 1.0f));
+		gl::draw( startupTexture, Vec2f( camO.getEyePoint().x + getWindowWidth()/2 - startupTexture.getWidth()/2, camO.getEyePoint().y + getWindowHeight()/2 - startupTexture.getHeight()/2 ) );
+		
+	}
+		
 	// ---------------------------------------------------------------------------
 
 	glPopMatrix();

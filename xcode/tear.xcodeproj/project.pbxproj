@@ -38,6 +38,7 @@
 		6664150D12A8129C0092554B /* cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = 6664150C12A8129C0092554B /* cube.obj */; };
 		6664155F12A819940092554B /* spikeball.obj in Resources */ = {isa = PBXBuildFile; fileRef = 6664155E12A819940092554B /* spikeball.obj */; };
 		66A648941270C58B00A9FA34 /* EnemyGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */; };
+		66E8BA2012B82EBE0087D2DC /* help.png in Resources */ = {isa = PBXBuildFile; fileRef = 66E8BA1F12B82EBE0087D2DC /* help.png */; };
 		66F4627F127A236C00ED36ED /* s_bg.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627B127A236C00ED36ED /* s_bg.wav */; };
 		66F46280127A236C00ED36ED /* s_feed.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627C127A236C00ED36ED /* s_feed.wav */; };
 		66F46281127A236C00ED36ED /* s_hurt.wav in Resources */ = {isa = PBXBuildFile; fileRef = 66F4627D127A236C00ED36ED /* s_hurt.wav */; };
@@ -116,6 +117,7 @@
 		6697A7CF126BCDC00091953B /* EnemyGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnemyGenerator.h; path = ../include/EnemyGenerator.h; sourceTree = "<group>"; };
 		6697A7E6126BFC670091953B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../include/util.h; sourceTree = "<group>"; };
 		66A648931270C58B00A9FA34 /* EnemyGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EnemyGenerator.cpp; path = ../src/EnemyGenerator.cpp; sourceTree = SOURCE_ROOT; };
+		66E8BA1F12B82EBE0087D2DC /* help.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = help.png; path = /Users/holz/code/cinder_0.8.2_mac/apps/tear/resources/help.png; sourceTree = "<absolute>"; };
 		66F46277127A22CF00ED36ED /* Resources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Resources.h; sourceTree = "<group>"; };
 		66F4627B127A236C00ED36ED /* s_bg.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s_bg.wav; path = ../resources/s_bg.wav; sourceTree = SOURCE_ROOT; };
 		66F4627C127A236C00ED36ED /* s_feed.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = s_feed.wav; path = ../resources/s_feed.wav; sourceTree = SOURCE_ROOT; };
@@ -238,6 +240,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				66E8BA1F12B82EBE0087D2DC /* help.png */,
 				6664155E12A819940092554B /* spikeball.obj */,
 				6664150C12A8129C0092554B /* cube.obj */,
 				66F462E5127A2A9100ED36ED /* s4_bg.wav */,
@@ -368,6 +371,7 @@
 				66F462E6127A2A9100ED36ED /* s4_bg.wav in Resources */,
 				6664150D12A8129C0092554B /* cube.obj in Resources */,
 				6664155F12A819940092554B /* spikeball.obj in Resources */,
+				66E8BA2012B82EBE0087D2DC /* help.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
