@@ -9,6 +9,8 @@
 #include "cinder/ObjLoader.h"
 #include "cinder/ImageIo.h"
 #include "defs.h"
+#include "cinder/gl/Fbo.h"
+#include "cinder/gl/GlslProg.h"
 
 #define OSC_SEND_HOST "localhost"
 #define OSC_SEND_PORT 9000
@@ -47,7 +49,7 @@ private:
 	float last;
 	CameraOrtho camO;
 	CameraPersp cam;
-	static float TUGSC, TENSION, RIGIDITY;
+	static float TUGSC, TENSION, RIGIDITY, TEARTHRESHOLD;
 	EnemyGenerator* egen;
 	ParticleGen* partgen;
 	bool debug;
@@ -95,6 +97,12 @@ private:
 	float zoom;
 	float lifeDecAlwaysRate, lifeDecRate, lifeIncRate;
 	
+	
+	// blur
+	gl::Fbo mFboBlurred, mFboTemporary;
+	gl::GlslProg mShaderBlur;
+	Area viewport;
+	
 public:
 	
 	GameState* gs;
@@ -111,12 +119,18 @@ public:
 	void oscUpdate();
 	void oscSend(string address, float value);
 	void handleCollisions(float dt);
+	void renderBackground();
+	void renderObjects();
+	void renderHUD();
+	void prepareBlur();
+	void doBlur();
+	void renderCorners(float scale);
 };
 
 void tearApp::prepareSettings(Settings* settings)
 {
-//	settings->setWindowSize(1280, 1024);
-	settings->setFullScreen(true);
+	settings->setWindowSize(1280, 1024);
+//	settings->setFullScreen(true);
 	b_firstrun = true;
 	lastwinner = -1;
 	
@@ -239,6 +253,22 @@ void tearApp::setup()
 	
 	
 	oscSend("/cinder/osc/start", 1.0f);
+	
+	/////
+	
+	gl::Fbo::Format format;
+	format.enableMipmapping(false);
+	format.setCoverageSamples(16);
+	format.setSamples(4);
+	mFboBlurred = gl::Fbo(512, 512, format);
+	mFboTemporary = gl::Fbo(512, 512, format);
+	
+	try { 
+		mShaderBlur = gl::GlslProg(loadResource(RES_VERT_GLSL),
+								   loadResource(RES_FRAG_GLSL)); 
+	} catch(...) {
+		console() << "Can't load/compile blur shader" << endl;
+	}
 }
 
 void tearApp::mouseDown( MouseEvent event )
@@ -463,6 +493,15 @@ void tearApp::oscUpdate()
 				console() << "Exception reading argument as float" << std::endl;
 			}
 		}
+		else if((addr == "/max/tearthreshold" ) && message.getNumArgs() == 1)
+		{
+			try {
+				TEARTHRESHOLD = message.getArgAsFloat(0);
+				
+			} catch (...) {
+				console() << "Exception reading argument as float" << std::endl;
+			}
+		}
 		
 	}
 }
@@ -543,7 +582,7 @@ void tearApp::update()
 				sumdist += blob->getPoints()[i].distance(*centroid);
 			}
 			
-			if(sumdist > 600.0f)
+			if(sumdist > TEARTHRESHOLD)
 			{
 				oscSend("/cinder/osc/tear", 1.0f);
 				state = TEARING;
@@ -744,26 +783,13 @@ bool tearApp::hasTugged(int id)
 	return osc_btn_b[id];
 }
 
-void tearApp::draw()
+void tearApp::renderBackground()
 {
 	
-	gl::enableAlphaBlending( false );
-	
-	// -------------------------------------------------------------------------
-	// PERSPECTIVE SECTION
-	// -------------------------------------------------------------------------
-	
-	glPushMatrix();
-	
-	// set camera to center on centroid
-	cam.lookAt(Vec3f(centroid->x, centroid->y, zoom), Vec3f(centroid->x, centroid->y, .0f));
-	gl::setMatrices(cam);
-	
-	gl::clear( Color( .1f, .1f, .1f ) ); 
 	
 	// draw the background grid, total -10000 to 10000, but clip everything outside the frame
 	// ---------------------------------------------------------------------------
-
+	
 	for(int i = 0; i < 100; i++)
 		for(int j = 0; j < 100; j++)
 		{
@@ -771,27 +797,27 @@ void tearApp::draw()
 			
 			glPushMatrix();
 			gl::translate(Vec3f(i * 100 - 5000, j * 100 - 5000, -300.0f));
-			gl::color(ColorA(.9f, .5f, .0f, .4f));
+			gl::color(ColorA(1.0f, .5f, 1.0f, .4f));
 			glLineWidth(1.0f);
 			glLineStipple(3, 0xAAAA);
 			glEnable(GL_LINE_STIPPLE);
-			gl::drawLine(Vec2f(-50.0f, 0.0f), Vec2f(50.0f, 0.0f));
-			gl::drawLine(Vec2f(.0f, -50.0f), Vec2f(0.0f, 50.0f));
+			gl::drawLine(Vec2f(-52.0f, 0.0f), Vec2f(52.0f, 0.0f));
+			gl::drawLine(Vec2f(.0f, -52.0f), Vec2f(0.0f, 52.0f));
 			glDisable(GL_LINE_STIPPLE);
 			glPopMatrix();
 		}
 	
-		for(int j = 0; j < 50; j++)
-		{
-			if(centroid->distance(Vec2f(j*200-5000, .0f)) > getWindowWidth() * 5) continue;
-			
-			glPushMatrix();
-			gl::translate(Vec3f(j * 200 - 5000, .0f, -2000.0f));
-			gl::color(ColorA(.2f, .2f, .2f, .2f));
-			gl::drawLine(Vec2f(.0f, -4500.0f), Vec2f(0.0f, 4500.0f));
-			glPopMatrix();
-		}
-	 
+	for(int j = 0; j < 50; j++)
+	{
+		if(centroid->distance(Vec2f(j*200-5000, .0f)) > getWindowWidth() * 5) continue;
+		
+		glPushMatrix();
+		gl::translate(Vec3f(j * 200 - 5000, .0f, -2000.0f));
+		gl::color(ColorA(.7f, .2f, .7f, .2f));
+		gl::drawLine(Vec2f(.0f, -4500.0f), Vec2f(0.0f, 4500.0f));
+		glPopMatrix();
+	}
+	
 	
 	glPushMatrix();
 	gl::translate(Vec3f(.0f, .0f, -50.0f));
@@ -799,8 +825,37 @@ void tearApp::draw()
 	glPopMatrix();
 	
 	// ---------------------------------------------------------------------------
+}
 
-	
+void tearApp::renderCorners(float scale)
+{
+	for(int i = 0; i < NUMPLAYERS; i++)
+	{
+		Vec2f& pt = blob->getPoints()[i];
+		glPushMatrix();
+		
+		gl::translate(pt);
+		
+		gl::color(Color(.0f, .0f, .0f));
+		gl::drawStrokedCircle(Vec2f(.0f, .0f), 5.0f, 32);
+		
+		gl::color(playerColor[i]);
+		gl::drawSolidCircle(Vec2f(.0f, .0f), scale * (5.0f + iscore[i] / 10.0f), 32);
+		gl::drawStrokedCircle(Vec2f(.0f, .0f), 15.0f, 32);
+		
+		// corner-cursor lines
+		if(state == RUNNING)
+		{
+			gl::color(ColorA(playerColor[i], .5f));
+			gl::drawVector(Vec3f(.0f, .0f, .0f), Vec3f(osc_irvec[i].x, osc_irvec[i].y, .0f) - Vec3f(pt.x, pt.y, .0f));
+		}
+		
+		glPopMatrix();
+	}
+}
+
+void tearApp::renderObjects()
+{
 	// draw blob lines
 	// ---------------------------------------------------------------------------
 	if(state != TEARING && !(state == ENDGAME && lastwinner == END_TEAR)){
@@ -811,17 +866,17 @@ void tearApp::draw()
 			glLineStipple((int) (sumdist/100.0f), lvl < 4 ? 0xAAAA : 0x8888);
 			glEnable(GL_LINE_STIPPLE);
 		}
-		gl::color(Color(1.0f, .0f, .0f));
+		gl::color(Color(1.0f, 1.0f, 1.0f));
 		gl::draw(*blob);
 		glDisable(GL_LINE_STIPPLE);
 		glLineWidth(1.0f);
-	// ---------------------------------------------------------------------------
-
-	
-	// draw inner area
-	// ---------------------------------------------------------------------------
+		// ---------------------------------------------------------------------------
 		
-		gl::color(ColorA(1.0f - life/100.0f, .0f, life/100.0f, .5f));
+		
+		// draw inner area
+		// ---------------------------------------------------------------------------
+		
+		gl::color(ColorA(1.0f, 1.0f, 1.0f, .2f));
 		
 		glBegin(GL_TRIANGLE_FAN);
 		
@@ -835,39 +890,25 @@ void tearApp::draw()
 		}
 		
 		gl::vertex(blob->getPoints()[0]);
-				   
+		
 		glEnd();
 		
 	}
 	// ---------------------------------------------------------------------------
-
+	
 	
 	// draw corners
 	// ---------------------------------------------------------------------------
-
-	for(int i = 0; i < NUMPLAYERS; i++)
-	{
-		Vec2f& pt = blob->getPoints()[i];
-		glPushMatrix();
-		
-		gl::translate(pt);
-		
-		gl::color(Color(.0f, .0f, .0f));
-		gl::drawStrokedCircle(Vec2f(.0f, .0f), 5.0f, 32);
-		
-		gl::color(playerColor[i]);
-		gl::drawSolidCircle(Vec2f(.0f, .0f), 5.0f + iscore[i] / 10.0f, 32);
-		gl::drawStrokedCircle(Vec2f(.0f, .0f), 15.0f, 32);
-		
-		// corner-cursor lines
-		if(state == RUNNING)
-		{
-			gl::color(ColorA(playerColor[i], .5f));
-			gl::drawVector(Vec3f(.0f, .0f, .0f), Vec3f(osc_irvec[i].x, osc_irvec[i].y, .0f) - Vec3f(pt.x, pt.y, .0f));
-		}
-
-		glPopMatrix();
-	}
+	
+	renderCorners(1.0f);
+	
+	prepareBlur();
+	
+	renderCorners(10.0f);
+	
+	doBlur();
+	
+	
 	// ---------------------------------------------------------------------------
 	
 	// draw enemies
@@ -907,35 +948,24 @@ void tearApp::draw()
 		}
 	}
 	// ---------------------------------------------------------------------------
-
+	
 	// draw cursors
 	// ---------------------------------------------------------------------------
-
+	
 	if(state == RUNNING)
 	{
 		for(int i = 0; i < NUMPLAYERS; i++)
 		{
 			gl::color(playerColor[i]);
-				
+			
 			gl::drawStrokedCircle(osc_irvec[i], 10.0f, 16);
 		}
 	}
 	// ---------------------------------------------------------------------------
-	glPopMatrix();
-	
-	// END PERSPECTIVE SECTION ---------------------------------------------------------------------------
+}
 
-	
-	
-	// -------------------------------------------------------------------------
-	// HUD / ORTHO SECTION
-	// -------------------------------------------------------------------------
-	
-	glPushMatrix();
-	
-	camO.lookAt(Vec3f(centroid->x - getWindowWidth()/2, centroid->y-getWindowHeight()/2, 10.0f), Vec3f(centroid->x- getWindowWidth()/2, centroid->y-getWindowHeight()/2, .0f));
-	gl::setMatrices(camO);
-	
+void tearApp::renderHUD()
+{
 	// draw health bar
 	// ---------------------------------------------------------------------------
 	
@@ -946,7 +976,8 @@ void tearApp::draw()
 	
 	gl::translate(Vec3f(camO.getEyePoint().x + getWindowWidth()/2, camO.getEyePoint().y+50.0f, .0f));
 	
-	gl::color(ColorA(1.0f - life/100.0f, .0f, life/100.0f, .9f));
+	gl::color(ColorA(1.0f, life/100.0f, life/100.0f, .9f));
+	
 	gl::drawSolidRect(Rectf(-life*3.0f, .0f, life*3.0f, 10.0f));
 	
 	if(colliding_bad)
@@ -969,7 +1000,7 @@ void tearApp::draw()
 	
 	// state/flag overlays
 	// ---------------------------------------------------------------------------
-
+	
 	switch(state)
 	{
 		case ENDGAME:
@@ -994,11 +1025,110 @@ void tearApp::draw()
 	if(FLAG_STARTUP && state == RUNNING)
 	{
 		gl::color(ColorA(1.0f, 1.0f, 1.0f, startupTimer > 3.0f ? (STARTUPTIME - startupTimer) / (STARTUPTIME - 3.0f) : 1.0f));
-		gl::draw( startupTexture, Vec2f( camO.getEyePoint().x + getWindowWidth()/2 - startupTexture.getWidth()/2, camO.getEyePoint().y + getWindowHeight()/2 - startupTexture.getHeight()/2 ) );
+		gl::draw( startupTexture, Vec2f( camO.getEyePoint().x + getWindowWidth()/2 - startupTexture.getWidth()/2, camO.getEyePoint().y + getWindowHeight()/2 - startupTexture.getHeight()/2 - 200 ) );
 		
 	}
-		
+	
 	// ---------------------------------------------------------------------------
+}
+
+void tearApp::prepareBlur()
+{
+	viewport = gl::getViewport();
+	gl::setViewport( mFboBlurred.getBounds() );
+	mFboBlurred.bindFramebuffer();
+	gl::clear( Color::black() );
+	
+	cam.setAspectRatio(1.0f);
+}
+
+void tearApp::doBlur()
+{
+	mFboBlurred.unbindFramebuffer();
+	
+	mShaderBlur.bind();
+	mShaderBlur.uniform("tex0", 0); // use mFboBlurred, see lower
+	mShaderBlur.uniform("sampleOffset", Vec2f((10.0f + sin(getElapsedSeconds() * 3.0f)) / 512.0f, 0.0f));
+	
+	mFboTemporary.bindFramebuffer();
+	gl::clear( Color::black() );
+	mFboBlurred.bindTexture(0); // use rendered scene as texture
+	gl::pushMatrices();
+	gl::setMatricesWindow(512, 512, false);
+	gl::drawSolidRect( mFboBlurred.getBounds() );
+	gl::popMatrices();
+	mFboBlurred.unbindTexture();
+	mFboTemporary.unbindFramebuffer();
+	
+	mShaderBlur.uniform("sampleOffset", Vec2f(0.0f, (10.0f + sin(getElapsedSeconds() * 3.0f))  / 512.0f));
+	
+	mFboBlurred.bindFramebuffer();
+	gl::clear( Color::black() );
+	mFboTemporary.bindTexture(0); // use horizontally blurred scene as texture
+	gl::pushMatrices();
+	gl::setMatricesWindow(512, 512, false);
+	gl::drawSolidRect( mFboTemporary.getBounds() );
+	gl::popMatrices();
+	mFboTemporary.unbindTexture();
+	mFboBlurred.unbindFramebuffer();
+	
+	mShaderBlur.unbind();
+	
+	gl::setViewport( viewport );
+	cam.setAspectRatio(getWindowAspectRatio());
+	
+	gl::enableAdditiveBlending();
+	gl::color( Color::white() );
+	glPushMatrix();
+	gl::translate(Vec3f(0, 0, zoom-900));
+	gl::color(ColorA(1.0f, 1.0f, 1.0f, .7f));
+	gl::draw( mFboBlurred.getTexture(), Rectf(centroid->x - getWindowWidth()/2, centroid->y-getWindowHeight()/2, centroid->x+getWindowWidth()/2, centroid->y + getWindowHeight()/2) );
+	glPopMatrix();
+	gl::enableAlphaBlending( false );
+}
+
+void tearApp::draw()
+{
+	
+	gl::enableAlphaBlending( false );
+	
+	
+	
+	
+	// -------------------------------------------------------------------------
+	// PERSPECTIVE SECTION
+	// -------------------------------------------------------------------------
+	
+	glPushMatrix();
+	
+	// set camera to center on centroid
+	cam.lookAt(Vec3f(centroid->x, centroid->y, zoom), Vec3f(centroid->x, centroid->y, .0f));
+	gl::setMatrices(cam);
+	
+	gl::clear( Color( .1f, .05f, .1f ) ); 
+
+	
+	renderBackground();
+	renderObjects();
+	
+	
+
+	glPopMatrix();
+	
+	// END PERSPECTIVE SECTION ---------------------------------------------------------------------------
+
+	
+	
+	// -------------------------------------------------------------------------
+	// HUD / ORTHO SECTION
+	// -------------------------------------------------------------------------
+	
+	glPushMatrix();
+	
+	camO.lookAt(Vec3f(centroid->x - getWindowWidth()/2, centroid->y-getWindowHeight()/2, 10.0f), Vec3f(centroid->x- getWindowWidth()/2, centroid->y-getWindowHeight()/2, .0f));
+	gl::setMatrices(camO);
+	
+	renderHUD();
 
 	glPopMatrix();
 	
@@ -1067,5 +1197,6 @@ void tearApp::shutdown()
 float tearApp::TUGSC = 1.8f;
 float tearApp::TENSION = 3.8f;
 float tearApp::RIGIDITY = .4f;
+float tearApp::TEARTHRESHOLD = 600.0f;
 
 CINDER_APP_BASIC( tearApp, RendererGl )

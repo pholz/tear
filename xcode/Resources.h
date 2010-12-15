@@ -15,3 +15,5 @@
 #define RES_BG		CINDER_RESOURCE( ../resources/, s4_bg.wav, 130, WAV )
 #define RES_HURT	CINDER_RESOURCE( ../resources/, s_hurt.wav, 131, WAV )
 #define RES_SPIKEBALL_OBJ		CINDER_RESOURCE( ../resources/, spikeball.obj, 132, DATA )
+#define RES_VERT_GLSL		CINDER_RESOURCE( ../resources/, blur_vert.glsl, 133, GLSL )
+#define RES_FRAG_GLSL		CINDER_RESOURCE( ../resources/, blur_frag.glsl, 134, GLSL )
