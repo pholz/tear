@@ -129,10 +129,23 @@ public:
 
 void tearApp::prepareSettings(Settings* settings)
 {
-	settings->setWindowSize(1280, 1024);
-//	settings->setFullScreen(true);
 	b_firstrun = true;
 	lastwinner = -1;
+	
+	//settings->setWindowSize(1024, 768);
+	//return;
+	
+	vector<shared_ptr<Display> > displays = Display::getDisplays();
+	if(displays.size() > 1)
+	{
+		settings->setDisplay(displays[1]);
+		settings->setFullScreen(true);
+	}
+	else
+	{
+		settings->setFullScreen(true);
+	}
+	
 	
 }
 
@@ -656,7 +669,7 @@ void tearApp::update()
 			// ---------------------------------------------------------------------------
 			
 			for(int j = 0; j < NUMPLAYERS; j++)
-				tug[j] = 2.0f;
+				tug[j] = 4.0f;
 			
 			// ---------------------------------------------------------------------------
 		

@@ -138,12 +138,13 @@ Enemy::Enemy(GameState* _gs, float lt, Rand* rand)
 	r2 = rand->nextFloat(4.0f,10.0f);
 	speed = rand->nextFloat(25.0f,55.0f);
 
-	
+	int ctr = 0;
 	do
 	{
 		pos = Vec2f(rand->nextFloat(gs->centroid->x-500, gs->centroid->x+500), rand->nextFloat(gs->centroid->y-500, gs->centroid->y+500));
+		ctr++;
 	}
-	while( insidePolygon(pos, *(gs->blob)) );
+	while( insidePolygon(pos, *(gs->blob))  && ctr < 500);
 	
 	vel = Vec2f(rand->nextFloat(-VEL, VEL), rand->nextFloat(-VEL, VEL));
 	
