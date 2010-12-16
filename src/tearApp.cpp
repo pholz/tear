@@ -37,6 +37,11 @@ enum gameState {
 	ENDGAME
 };
 
+Vec2f cart(float r, float theta)
+{
+	return Vec2f(r * math<float>::cos(theta), r * math<float>::sin(theta));
+}
+
 class tearApp : public AppBasic {
 	
 private:
@@ -63,6 +68,7 @@ private:
 	float sumdist;
 	
 	gameState state;
+	float collectTimer[4];
 	
 	bool b_endgame, b_firstrun;
 	int lastwinner;
@@ -123,8 +129,8 @@ public:
 	void renderObjects();
 	void renderHUD();
 	void prepareBlur();
-	void doBlur();
-	void renderCorners(float scale);
+	void doBlur(float offset, float alpha, float zoomdist=900);
+	void renderCorners(float scale, bool fill, int which = -1);
 };
 
 void tearApp::prepareSettings(Settings* settings)
@@ -169,6 +175,7 @@ void tearApp::setup()
 	tearTimer = .0f;
 	noPauseTimer = .0f;
 	
+	
 	zoom = 350.0f;
 	lifeDecAlwaysRate = 1.0f;
 	lifeDecRate = 1.0f;
@@ -186,9 +193,9 @@ void tearApp::setup()
 	
 	blob = new PolyLine<Vec2f>();
 	blob->setClosed(true);
-	blob->push_back(Vec2f(20.0f, 50.0f));
-	blob->push_back(Vec2f(40.0f, 50.0f));
-	blob->push_back(Vec2f(40.0f, 100.0f));
+	blob->push_back(cart(50.0f, M_PI/2.0f));
+	blob->push_back(cart(50.0f, M_PI/2.0f + 2.0f*M_PI/3.0f));
+	blob->push_back(cart(50.0f, M_PI/2.0f + 4.0f*M_PI/3.0f));
 	if(NUMPLAYERS > 3)
 		blob->push_back(Vec2f(20.0f, 100.0f));
 	
@@ -215,6 +222,7 @@ void tearApp::setup()
 		osc_btn_b[i] = false;
 		osc_btn_1[i] = false;
 		osc_irvec[i] = Vec2f(0, 0);
+		collectTimer[i] = .0f;
 	}
 	player_caused_pause = 0;
 	pause_btn_released = false;
@@ -547,8 +555,14 @@ void tearApp::update()
 				endgame(END_DEATH);
 			
 			for(int i = 0; i < NUMPLAYERS; i++)
+			{
 				if(iscore[i] >= 100.0f)
 					endgame(i);
+				
+				collectTimer[i] -= dt;
+				if(collectTimer[i] < 0) collectTimer[i] = .0f;
+			}
+				
 			
 			life -= dt * lifeDecAlwaysRate;
 			
@@ -627,7 +641,7 @@ void tearApp::update()
 			// ---------------------------------------------------------------------------
 			handleCollisions(dt);
 			egen->update(dt);
-			partgen->update(dt);
+		//	partgen->update(dt);
 			// ---------------------------------------------------------------------------
 
 			// check for pause requested
@@ -674,7 +688,7 @@ void tearApp::update()
 			// ---------------------------------------------------------------------------
 		
 			egen->update(dt);
-			partgen->update(dt);
+		//	partgen->update(dt);
 			
 			break;
 		
@@ -746,6 +760,7 @@ void tearApp::handleCollisions(float dt)
 				life += lifeIncRate * dt;
 				colliding_good = true;
 				oscSend("/cinder/osc/health", 1.0f);
+				
 			}
 			else if((*it)->type == BAD) 
 			{
@@ -769,6 +784,7 @@ void tearApp::handleCollisions(float dt)
 				case UGLY:
 					iscore[it->corner] = math<float>::min(iscore[it->corner] + 10.0f, 100.0f);
 					oscSend("/cinder/osc/collect", 1.0f);
+					collectTimer[it->corner] = .5f;
 					break;
 					
 				case COLORED:
@@ -776,10 +792,11 @@ void tearApp::handleCollisions(float dt)
 					{
 						iscore[it->corner] = math<float>::min(iscore[it->corner] + 10.0f, 100.0f);
 						oscSend("/cinder/osc/collect", 1.0f);
+						collectTimer[it->corner] = .5f;
 					}
 					else
 					{
-						iscore[it->enemy->special_type] = math<float>::max(iscore[it->corner] - 10.0f, 0.0f);
+						iscore[it->enemy->special_type] = math<float>::max(iscore[it->enemy->special_type] - 10.0f, 0.0f);
 						oscSend("/cinder/osc/anticollect", 1.0f);
 					}
 					break;
@@ -832,36 +849,39 @@ void tearApp::renderBackground()
 	}
 	
 	
-	glPushMatrix();
-	gl::translate(Vec3f(.0f, .0f, -50.0f));
-	partgen->draw();
-	glPopMatrix();
-	
+	//glPushMatrix();
+//	gl::translate(Vec3f(.0f, .0f, -50.0f));
+//	partgen->draw();
+//	glPopMatrix();
+//	
 	// ---------------------------------------------------------------------------
 }
 
-void tearApp::renderCorners(float scale)
+void tearApp::renderCorners(float scale, bool fill, int which)
 {
 	for(int i = 0; i < NUMPLAYERS; i++)
 	{
+		if(which != -1 && i != which) continue;
+		
 		Vec2f& pt = blob->getPoints()[i];
 		glPushMatrix();
 		
 		gl::translate(pt);
 		
-		gl::color(Color(.0f, .0f, .0f));
-		gl::drawStrokedCircle(Vec2f(.0f, .0f), 5.0f, 32);
+		//gl::color(Color(.0f, .0f, .0f));
+		//gl::drawStrokedCircle(Vec2f(.0f, .0f), 5.0f, 32);
 		
 		gl::color(playerColor[i]);
-		gl::drawSolidCircle(Vec2f(.0f, .0f), scale * (5.0f + iscore[i] / 10.0f), 32);
-		gl::drawStrokedCircle(Vec2f(.0f, .0f), 15.0f, 32);
 		
-		// corner-cursor lines
-		if(state == RUNNING)
-		{
-			gl::color(ColorA(playerColor[i], .5f));
-			gl::drawVector(Vec3f(.0f, .0f, .0f), Vec3f(osc_irvec[i].x, osc_irvec[i].y, .0f) - Vec3f(pt.x, pt.y, .0f));
-		}
+		if(fill)
+			gl::drawSolidCircle(Vec2f(.0f, .0f), scale * (5.0f + iscore[i] / 10.0f), 32);
+		else
+			gl::drawStrokedCircle(Vec2f(.0f, .0f), scale * (5.0f + iscore[i] / 10.0f), 32);
+		
+		if(which == -1)
+			gl::drawStrokedCircle(Vec2f(.0f, .0f), 15.0f, 32);
+		
+		
 		
 		glPopMatrix();
 	}
@@ -913,13 +933,33 @@ void tearApp::renderObjects()
 	// draw corners
 	// ---------------------------------------------------------------------------
 	
-	renderCorners(1.0f);
+	renderCorners(1.0f, true);
 	
 	prepareBlur();
 	
-	renderCorners(10.0f);
+	renderCorners(10.0f, true);
 	
-	doBlur();
+	doBlur(10.0f, .6f + sin(getElapsedSeconds() * 3.0f) / 10.0f);
+	
+	prepareBlur();
+	
+	renderCorners(1.0f, true);
+	
+	doBlur(1.0f, .7f, 1100);
+	
+	for(int i = 0; i < NUMPLAYERS; i++)
+	{
+		if(collectTimer[i] > .0f)
+		{
+			prepareBlur();
+			
+			renderCorners((.5f - collectTimer[i]) * 30.0f + 5.0f, false, i);
+			
+			doBlur(1.5f, collectTimer[i] * 1.9f, 1100);
+		}
+	}
+	
+	
 	
 	
 	// ---------------------------------------------------------------------------
@@ -970,8 +1010,18 @@ void tearApp::renderObjects()
 		for(int i = 0; i < NUMPLAYERS; i++)
 		{
 			gl::color(playerColor[i]);
-			
+			glLineWidth(1.5f);
 			gl::drawStrokedCircle(osc_irvec[i], 10.0f, 16);
+
+			gl::color(ColorA(playerColor[i], .5f));
+			
+			Vec2f& pt = blob->getPoints()[i];
+			
+			glPushMatrix();
+			gl::translate(pt);
+			Vec3f v = Vec3f(osc_irvec[i].x, osc_irvec[i].y, .0f) - Vec3f(pt.x, pt.y, .0f);
+			gl::drawVector(Vec3f(.0f, .0f, .0f), v - v.normalized()*10.0f);
+			glPopMatrix();
 		}
 	}
 	// ---------------------------------------------------------------------------
@@ -1055,13 +1105,13 @@ void tearApp::prepareBlur()
 	cam.setAspectRatio(1.0f);
 }
 
-void tearApp::doBlur()
+void tearApp::doBlur(float offset, float alpha, float zoomdist)
 {
 	mFboBlurred.unbindFramebuffer();
 	
 	mShaderBlur.bind();
 	mShaderBlur.uniform("tex0", 0); // use mFboBlurred, see lower
-	mShaderBlur.uniform("sampleOffset", Vec2f((10.0f + sin(getElapsedSeconds() * 3.0f)) / 512.0f, 0.0f));
+	mShaderBlur.uniform("sampleOffset", Vec2f(offset / 512.0f, 0.0f));
 	
 	mFboTemporary.bindFramebuffer();
 	gl::clear( Color::black() );
@@ -1073,7 +1123,7 @@ void tearApp::doBlur()
 	mFboBlurred.unbindTexture();
 	mFboTemporary.unbindFramebuffer();
 	
-	mShaderBlur.uniform("sampleOffset", Vec2f(0.0f, (10.0f + sin(getElapsedSeconds() * 3.0f))  / 512.0f));
+	mShaderBlur.uniform("sampleOffset", Vec2f(0.0f, offset / 512.0f));
 	
 	mFboBlurred.bindFramebuffer();
 	gl::clear( Color::black() );
@@ -1093,8 +1143,8 @@ void tearApp::doBlur()
 	gl::enableAdditiveBlending();
 	gl::color( Color::white() );
 	glPushMatrix();
-	gl::translate(Vec3f(0, 0, zoom-900));
-	gl::color(ColorA(1.0f, 1.0f, 1.0f, .7f));
+	gl::translate(Vec3f(0, 0, zoom-zoomdist));
+	gl::color(ColorA(1.0f, 1.0f, 1.0f, alpha));
 	gl::draw( mFboBlurred.getTexture(), Rectf(centroid->x - getWindowWidth()/2, centroid->y-getWindowHeight()/2, centroid->x+getWindowWidth()/2, centroid->y + getWindowHeight()/2) );
 	glPopMatrix();
 	gl::enableAlphaBlending( false );

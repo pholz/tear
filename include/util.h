@@ -24,3 +24,4 @@ bool insidePolygon(Vec2f p, PolyLine<Vec2f>& poly)
 	
 	return inside;
 }
+
